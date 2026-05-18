@@ -427,9 +427,20 @@ function ReportPanel({ children, title, style }: { children: React.ReactNode; ti
     );
 }
 
-export default function ReportDashboard({ mode, initialMachine }: { mode: ReportMode; initialMachine: string }) {
+type ReportDashboardProps = {
+    mode: ReportMode;
+    initialArea?: string;
+    initialType?: string;
+    initialMachine: string;
+    initialModel?: string;
+};
+
+export default function ReportDashboard({ mode, initialArea = '', initialType = '', initialMachine, initialModel = '' }: ReportDashboardProps) {
     const router = useRouter();
+    const initialMachineIsAll = initialMachine.toLowerCase() === 'all';
     const initialMachineValue = initialMachine && initialMachine.toLowerCase() !== 'all' ? initialMachine : '';
+    const initialMachineFilterValue = initialMachineValue || (initialMachineIsAll ? 'ALL' : '');
+    const initialModelValue = initialModel || '';
     const modeStorageKey = `${STORAGE_KEYS.mode}.${mode}`;
     const initialReportMode = (() => {
         const storedMode = readStoredValue(modeStorageKey, mode);
@@ -439,19 +450,19 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
     const [activeInitialMachine, setActiveInitialMachine] = useState(initialMachineValue);
     const [dailyPeriod, setDailyPeriod] = useState(() => readStoredValue(STORAGE_KEYS.dailyPeriod, currentMonth()));
     const [monthlyPeriod, setMonthlyPeriod] = useState(() => readStoredValue(STORAGE_KEYS.monthlyPeriod, currentYear()));
-    const [area, setArea] = useState(() => readStoredFilter(initialReportMode, 'area'));
-    const [type, setType] = useState(() => readStoredFilter(initialReportMode, 'type'));
-    const [machine, setMachine] = useState(() => initialMachineValue || readStoredFilter(initialReportMode, 'machine', 'ALL', true));
-    const [model, setModel] = useState(() => readStoredFilter(initialReportMode, 'model', 'all', true));
+    const [area, setArea] = useState(() => initialArea || (initialMachineValue ? '' : readStoredFilter(initialReportMode, 'area')));
+    const [type, setType] = useState(() => initialType || (initialMachineValue ? '' : readStoredFilter(initialReportMode, 'type')));
+    const [machine, setMachine] = useState(() => initialMachineFilterValue || readStoredFilter(initialReportMode, 'machine', 'ALL', true));
+    const [model, setModel] = useState(() => initialModelValue || readStoredFilter(initialReportMode, 'model', 'all', true));
     const [areaOptions, setAreaOptions] = useState<OptionItem[]>([]);
     const [typeOptions, setTypeOptions] = useState<OptionItem[]>([]);
     const [machineOptions, setMachineOptions] = useState<OptionItem[]>([]);
     const [data, setData] = useState<ReportResults | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const storedTypeRef = useRef(readStoredFilter(initialReportMode, 'type'));
-    const storedMachineRef = useRef(initialMachineValue || readStoredFilter(initialReportMode, 'machine', 'ALL', true));
-    const storedModelRef = useRef(readStoredFilter(initialReportMode, 'model', 'all', true));
+    const storedTypeRef = useRef(initialType || (initialMachineValue ? '' : readStoredFilter(initialReportMode, 'type')));
+    const storedMachineRef = useRef(initialMachineFilterValue || readStoredFilter(initialReportMode, 'machine', 'ALL', true));
+    const storedModelRef = useRef(initialModelValue || readStoredFilter(initialReportMode, 'model', 'all', true));
     const reportRequestRef = useRef(0);
     const initialMachineSyncRef = useRef('');
 
@@ -494,6 +505,27 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
     }, [activeInitialMachine, reportMode]);
 
     useEffect(() => {
+        if (initialArea) setArea(initialArea);
+        if (initialType) {
+            storedTypeRef.current = initialType;
+            setType(initialType);
+        }
+        if (initialMachineIsAll) {
+            setActiveInitialMachine('');
+            storedMachineRef.current = 'ALL';
+            setMachine('ALL');
+            initialMachineSyncRef.current = '';
+        } else {
+            setActiveInitialMachine(initialMachineValue);
+            initialMachineSyncRef.current = '';
+        }
+        if (initialModelValue) {
+            storedModelRef.current = initialModelValue;
+            setModel(initialModelValue);
+        }
+    }, [initialArea, initialType, initialMachineIsAll, initialMachineValue, initialModelValue]);
+
+    useEffect(() => {
         setActiveInitialMachine(initialMachineValue);
         initialMachineSyncRef.current = '';
     }, [initialMachineValue]);
@@ -504,10 +536,11 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
             setAreaOptions(areas);
             setArea((current) => {
                 if (current && areas.some((item) => item.value === current)) return current;
+                if (activeInitialMachine) return current || '';
                 return areas[0]?.value || '';
             });
         }).catch(() => undefined);
-    }, []);
+    }, [activeInitialMachine]);
 
     useEffect(() => {
         if (!activeInitialMachine) return;
@@ -614,9 +647,22 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
         storeFilter(reportMode, 'model', model, true);
     }, [model, reportMode]);
 
+    const clearInitialMachineSelection = useCallback(() => {
+        setActiveInitialMachine('');
+        initialMachineSyncRef.current = '';
+        if (initialMachineValue) {
+            const path = reportMode === 'daily' ? '/oee_production/daily_report' : '/oee_production/monthly_report';
+            router.replace(path, { scroll: false });
+        }
+    }, [initialMachineValue, reportMode, router]);
+
     const fetchReport = useCallback(async () => {
         const requestId = reportRequestRef.current + 1;
         reportRequestRef.current = requestId;
+        if (activeInitialMachine && (!area || !type || machine !== activeInitialMachine)) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         setError('');
         try {
@@ -632,7 +678,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
         } finally {
             if (requestId === reportRequestRef.current) setLoading(false);
         }
-    }, [reportMode, period, area, type, machine, model]);
+    }, [reportMode, period, area, type, machine, model, activeInitialMachine]);
 
     useEffect(() => {
         fetchReport();
@@ -652,11 +698,23 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
     }, [modelOptions]);
 
     const labels = buckets.map((item) => item.label);
+    const isAllMachineSelection = !machine || machine === 'ALL' || machine.toLowerCase() === 'all';
     const navigationMachine = useMemo(() => {
         if (machine && machine !== 'ALL' && machine.toLowerCase() !== 'all') return machine;
-        if (data?.machines?.length === 1) return data.machines[0].machine_name;
         return '';
-    }, [data, machine]);
+    }, [machine]);
+
+    const preserveCurrentReportLocation = useCallback(() => {
+        if (typeof window === 'undefined') return;
+        const reportPath = reportMode === 'daily' ? '/oee_production/daily_report' : '/oee_production/monthly_report';
+        const params = new URLSearchParams();
+        if (area) params.set('area', area);
+        if (type) params.set('type', type);
+        params.set('machine', isAllMachineSelection ? 'ALL' : machine);
+        if (model) params.set('model', model);
+        const query = params.toString();
+        window.history.replaceState(window.history.state, '', `${reportPath}${query ? `?${query}` : ''}`);
+    }, [area, isAllMachineSelection, machine, model, reportMode, type]);
 
     const confirmDailyChartNavigation = useCallback(async (view: 'output' | 'status', bucketIndex: number | undefined) => {
         if (reportMode !== 'daily') return;
@@ -672,6 +730,39 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
             || Number(bucket.outputC || 0) > 0;
         const hasDailyData = hasOutput || hasDowntime || bucket.availability != null || bucket.runtimeMinutes != null;
         if (!hasDailyData) return;
+
+        if (isAllMachineSelection) {
+            if (!area || !type) {
+                await Swal.fire({
+                    title: 'Select area and type',
+                    text: 'Please select area and type before opening the overall machine view.',
+                    icon: 'info',
+                });
+                return;
+            }
+
+            const params = new URLSearchParams({
+                area,
+                type,
+                date: bucket.key,
+                view,
+            });
+
+            const result = await Swal.fire({
+                title: 'Open overall machine view?',
+                text: `All ${type} machines on ${bucket.key} (${view === 'status' ? 'MC Status' : 'Output'})`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Open',
+                cancelButtonText: 'Cancel',
+            });
+
+            if (!result.isConfirmed) return;
+            preserveCurrentReportLocation();
+            localStorage.setItem('overallMachineActiveView', view);
+            router.push(`/overall_machine_working?${params.toString()}`);
+            return;
+        }
 
         if (!navigationMachine) {
             await Swal.fire({
@@ -698,11 +789,12 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
         });
 
         if (!result.isConfirmed) return;
+        preserveCurrentReportLocation();
         localStorage.setItem('machineWorkingTab', view);
         localStorage.setItem('machineNameLocal', navigationMachine);
         localStorage.setItem('machineDateLocal', bucket.key);
         router.push(`/machine_working?${params.toString()}`);
-    }, [buckets, navigationMachine, reportMode, router]);
+    }, [area, buckets, isAllMachineSelection, navigationMachine, preserveCurrentReportLocation, reportMode, router, type]);
 
     const downtimeMeta = useMemo(() => {
         const minutes: Record<string, Array<number | null>> = {};
@@ -772,7 +864,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                 order: 2,
                 datalabels: downtimeBarDatalabels(6, (v: number) => Math.round(v) + '%'),
             })),
-            { type: 'line' as const, label: 'Availability', data: buckets.map((item) => item.availability), borderColor: chartColors.efficiency, backgroundColor: chartColors.efficiency, tension: 0.25, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'bottom' as const, anchor: 'end' as const, offset: 6, font: { size: 9, weight: 'bold' as const }, color: chartColors.efficiency, backgroundColor: 'rgba(255,255,255,0.88)', borderRadius: 4, padding: { top: 1, bottom: 1, left: 3, right: 3 }, formatter: (v: number) => Math.round(v) + '%' } },
+            { type: 'line' as const, label: 'Availability', data: buckets.map((item) => item.availability && item.availability > 0 ? item.availability : null), borderColor: chartColors.efficiency, backgroundColor: chartColors.efficiency, tension: 0.25, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, spanGaps: false, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'bottom' as const, anchor: 'end' as const, offset: 6, font: { size: 9, weight: 'bold' as const }, color: chartColors.efficiency, backgroundColor: 'rgba(255,255,255,0.88)', borderRadius: 4, padding: { top: 1, bottom: 1, left: 3, right: 3 }, formatter: (v: number) => Math.round(v) + '%' } },
         ],
     };
 
@@ -803,7 +895,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
             { type: 'bar' as const, label: 'Shift C/day (23:00-07:00)', data: buckets.map((item) => item.outputPerDayC ?? item.outputC), backgroundColor: '#8b5cf6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 9, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
             { type: 'line' as const, label: 'Total Output/day', data: buckets.map((item) => item.outputPerDay ?? item.output), borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, pointHoverRadius: 0, tension: 0, stack: 'total_line', yAxisID: 'y', order: 3, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'top' as const, anchor: 'end' as const, offset: 4, color: '#334155', font: { size: 10, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
             { type: 'line' as const, label: 'Output Target/day', data: buckets.map((item) => item.outputTargetPerDay ?? item.outputTarget), borderColor: chartColors.outputTarget, borderDash: [8, 5], backgroundColor: chartColors.outputTarget, tension: 0.2, yAxisID: 'y', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: targetDatalabels(chartColors.outputTarget, (v: number) => { const n = Math.round(v); return 'T: ' + (n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString()); }) },
-            { type: 'line' as const, label: 'Availability', data: buckets.map((item) => item.availability), borderColor: chartColors.efficiency, backgroundColor: chartColors.efficiency, tension: 0.25, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'bottom' as const, anchor: 'end' as const, offset: 6, font: { size: 9, weight: 'normal' as const }, color: chartColors.efficiency, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 4, formatter: (v: number) => Math.round(v) + '%' } },
+            { type: 'line' as const, label: 'Availability', data: buckets.map((item) => item.availability && item.availability > 0 ? item.availability : null), borderColor: chartColors.efficiency, backgroundColor: chartColors.efficiency, tension: 0.25, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, spanGaps: false, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'bottom' as const, anchor: 'end' as const, offset: 6, font: { size: 9, weight: 'normal' as const }, color: chartColors.efficiency, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 4, formatter: (v: number) => Math.round(v) + '%' } },
             { type: 'line' as const, label: 'Availability Target', data: buckets.map((item) => item.efficiencyTarget), borderColor: chartColors.efficiencyTarget, borderDash: [8, 5], backgroundColor: chartColors.efficiencyTarget, tension: 0.2, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: targetDatalabels(chartColors.efficiencyTarget, (v: number) => 'T: ' + Math.round(v) + '%') },
             { type: 'line' as const, label: 'Cycle Time', data: buckets.map((item) => item.cycleTime), borderColor: chartColors.cycle, backgroundColor: chartColors.cycle, tension: 0.2, yAxisID: 'y2', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: false } },
             { type: 'line' as const, label: 'Cycle Target', data: buckets.map((item) => item.cycleTimeTarget), borderColor: chartColors.cycleTarget, borderDash: [8, 5], backgroundColor: chartColors.cycleTarget, tension: 0.2, yAxisID: 'y2', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: false } },
@@ -902,7 +994,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                     <label className="form-label m-0 small" style={{ minWidth: '130px' }}>
                         Area
                         <select className="form-select form-select-sm" value={area} onChange={(e) => {
-                            setActiveInitialMachine('');
+                            clearInitialMachineSelection();
                             storedTypeRef.current = '';
                             storedMachineRef.current = 'ALL';
                             storedModelRef.current = 'all';
@@ -917,7 +1009,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                     <label className="form-label m-0 small" style={{ minWidth: '130px' }}>
                         Type
                         <select className="form-select form-select-sm" value={type} onChange={(e) => {
-                            setActiveInitialMachine('');
+                            clearInitialMachineSelection();
                             storedTypeRef.current = e.target.value;
                             storedMachineRef.current = 'ALL';
                             storedModelRef.current = 'all';
@@ -931,7 +1023,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                     <label className="form-label m-0 small" style={{ minWidth: '150px' }}>
                         Machine
                         <select className="form-select form-select-sm" value={machine} onChange={(e) => {
-                            setActiveInitialMachine('');
+                            clearInitialMachineSelection();
                             storedMachineRef.current = e.target.value;
                             storedModelRef.current = 'all';
                             setMachine(e.target.value);

@@ -30,7 +30,15 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
 function DailyReportContent() {
     const searchParams = useSearchParams();
     const machineName = searchParams.get('machine') || '';
-    return <ReportDashboard mode="daily" initialMachine={machineName} />;
+    return (
+        <ReportDashboard
+            mode="daily"
+            initialArea={searchParams.get('area') || ''}
+            initialType={searchParams.get('type') || ''}
+            initialMachine={machineName}
+            initialModel={searchParams.get('model') || ''}
+        />
+    );
 }
 
 export default function DailyReportPage() {
