@@ -8,7 +8,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const influxService = require("./influxService");
 const cacheService = require("./cacheService");
-const { getMachineStateMem } = require("./mqttService"); // 🆕 Use MQTT Memory
+const { getMachineStateMem, forceHourRolloverAll } = require("./mqttService"); // 🆕 Use MQTT Memory
 const {
     getMachineRunTimeMode,
     calcMcStatusDurations,
@@ -128,6 +128,10 @@ async function fastPollAndEmit() {
         const { dateStr, thColumn, start } = getCurrentHourBoundaries(now);
         const elapsedSeconds = getElapsedSecondsInHour(now);
         const currentShiftIndex = getShiftIndex(thColumn);
+
+        // 🆕 [Phase 12] Force MQTT RAM to rollover at exactly xx:00
+        // This ensures the previous hour is closed and pushed to Cache without waiting for a new message
+        forceHourRolloverAll(thColumn);
 
         // 🆕 [Step 3] NG Cache: RAM (past) + pending + InfluxDB (current hour only)
         // — ฟังก์ชั่นนี้ทำแค่ current hour (ไม่ใช่ตั้งแต่ต้นกะอีกต่อไป)
@@ -438,6 +442,7 @@ async function fastPollAndEmit() {
             const lastData = lastEmittedData.get(machineName);
             const currentOutput = machinePayload.daily.totalOutput;
             const currentCt = machinePayload.currentHour.cycleTime;
+            const currentDailyCt = machinePayload.daily.avgCycleTime;
             const currentTarget = machinePayload.daily.accumTarget;
             const currentAchieve = machinePayload.daily.achieve;
             const currentStationNgStr = JSON.stringify(machinePayload.currentHour.stationNg); // 🆕 Convert to string for deep compare
@@ -449,6 +454,7 @@ async function fastPollAndEmit() {
             const hasChanged = !lastData ||
                 lastData.output !== currentOutput ||
                 lastData.cycleTime !== currentCt ||
+                lastData.dailyCycleTime !== currentDailyCt ||
                 lastData.accumTarget !== currentTarget ||
                 lastData.achieve !== currentAchieve ||
                 lastData.shiftIndex !== currentShiftIndex ||
@@ -462,6 +468,7 @@ async function fastPollAndEmit() {
                 lastEmittedData.set(machineName, {
                     output: currentOutput,
                     cycleTime: currentCt,
+                    dailyCycleTime: currentDailyCt,
                     accumTarget: currentTarget,
                     achieve: currentAchieve,
                     shiftIndex: currentShiftIndex,

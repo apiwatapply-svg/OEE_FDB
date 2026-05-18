@@ -100,15 +100,14 @@ async function startup() {
         // 4.8 🆕 Force initial poll from MSSQL to populate live Status/Alarm in memory
         await pollMssqlStatusForWeb();
 
-        // 4.85 🆕 Schedule pollMssqlStatusForWeb ทุก 5 นาที
-        // (ย้ายมาจาก cronService Job 4.6 เพราะต้องการ mqttService instance ของ thread นี้)
+        const pollIntervalMs = Math.max(10000, Number(process.env.MSSQL_STATUS_POLL_MS || 300000));
         setInterval(async () => {
             try {
                 await pollMssqlStatusForWeb();
             } catch (err) {
                 console.error("[Worker] pollMssqlStatusForWeb error:", err.message);
             }
-        }, 5 * 60 * 1000); // ทุก 5 นาที
+        }, pollIntervalMs);
 
         // 4.9 Phase 11: Start Checkpoint timer — save state to disk every 5 minutes
         // ต้องเริ่มหลังจาก services ทั้งหมดพร้อมแล้ว เพื่อให้ snapshot มีข้อมูลครบ
@@ -158,9 +157,21 @@ parentPort.on("message", async (msg) => {
                     const cacheServiceModule = require("./services/cacheService");
                     await cacheServiceModule.hydrateFromMSSQL();
 
+                    if ([...reasons].includes("events_backfill_done")) {
+                        try {
+                            const memOeeService = require("./services/memoryOeeService");
+                            const { getShiftDateUTC } = require("./utils/timeUtils");
+                            const shiftDate = getShiftDateUTC();
+                            await memOeeService.hydrateFromMssql(shiftDate);
+                            console.log(`[Worker] ✅ memoryOeeService rehydrated (shift: ${shiftDate})`);
+                        } catch (rehydrateErr) {
+                            console.error("[Worker] memoryOeeService rehydrate failed:", rehydrateErr.message);
+                        }
+                    }
+
                     // reloadAvail ถ้ามี reason ที่เกี่ยวกับ MCStatus/OEE
                     const needsAvail = ["hourly_done", "oee_hourly_done", "oee_startup_done",
-                                        "oee_backfill_done", "backfill_startup_done", "daily_sync_done"];
+                                        "oee_backfill_done", "backfill_startup_done", "daily_sync_done", "events_backfill_done"];
                     if ([...reasons].some(r => needsAvail.includes(r))) {
                         await cacheServiceModule.hydrateAvailabilityFromMSSQL();
                     }

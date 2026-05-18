@@ -97,6 +97,7 @@ async function startup() {
         // 5. Backfill Status & Alarm from InfluxDB → MSSQL
         log("🔄 [CronWorker] Starting backfillEventsStartup...");
         await backfillEventsStartup();
+        notifyCacheReload("events_backfill_done"); // 📡 ให้ realtime worker rehydrate stopwatch จาก MSSQL
 
         // 5.5 Recalculate runtime/availability per hour
         log("🔄 [CronWorker] Starting backfillRuntimeAvailStartup...");

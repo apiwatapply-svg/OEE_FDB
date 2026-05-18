@@ -2145,32 +2145,44 @@ async function pollMssqlStatusForWeb() {
 
         console.log("🔍 [Cron] Polling latest MSSQL Status/Alarm for Web Sync...");
 
-        // Use PRISMA raw query or grouping to find latest status per machine
         const machines = await prisma.tbm_machine.findMany({
             where: { status: 'active' },
             select: { machine_name: true }
         });
 
+        const statusRows = await prisma.$queryRaw`
+            SELECT MC, MCStatus
+            FROM (
+                SELECT MC, MCStatus,
+                       ROW_NUMBER() OVER (PARTITION BY MC ORDER BY Datetime DESC) AS rn
+                FROM tb_MCStatus
+            ) t
+            WHERE rn = 1
+        `;
+
+        const alarmRows = await prisma.$queryRaw`
+            SELECT MC, MCAlarm
+            FROM (
+                SELECT MC, MCAlarm,
+                       ROW_NUMBER() OVER (PARTITION BY MC ORDER BY Datetime DESC) AS rn
+                FROM tb_MCAlarm
+            ) t
+            WHERE rn = 1
+        `;
+
+        const statusMap = {};
+        for (const row of statusRows || []) {
+            statusMap[row.MC] = row.MCStatus;
+        }
+
+        const alarmMap = {};
+        for (const row of alarmRows || []) {
+            alarmMap[row.MC] = row.MCAlarm;
+        }
+
         for (const m of machines) {
             const machineName = m.machine_name;
-            const latestStatus = await prisma.tb_MCStatus.findFirst({
-                where: { MC: machineName },
-                orderBy: { Datetime: 'desc' },
-                select: { MCStatus: true, Datetime: true }
-            });
-            
-            const latestAlarm = await prisma.tb_MCAlarm.findFirst({
-                where: { MC: machineName },
-                orderBy: { Datetime: 'desc' },
-                select: { MCAlarm: true, Datetime: true }
-            });
-
-            // Update state (mqttService logic will diff natively and only emit if changed)
-            updateStateFromMssqlPoller(
-                machineName, 
-                latestStatus ? latestStatus.MCStatus : undefined, 
-                latestAlarm ? latestAlarm.MCAlarm : undefined
-            );
+            updateStateFromMssqlPoller(machineName, statusMap[machineName], alarmMap[machineName]);
         }
     } catch (err) {
         console.error("❌ pollMssqlStatusForWeb failed:", err.message);

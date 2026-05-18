@@ -51,11 +51,9 @@ export async function getDowntimeKeys(machineType?: string): Promise<string[]> {
     const targetTypeConfig = sysConfig.machineTypes[machineType || "default"] || sysConfig.default;
     const statuses: StatusDefinition[] = targetTypeConfig?.statuses || sysConfig.default.statuses || [];
 
-    // Filter out running status, keep downtime and others? 
-    // In our original code DOWNTIME_KEYS included Plan_Stop, Break_Time, etc., basically everything except Run_Time.
     const keys: string[] = [];
     for (const st of statuses) {
-        if (st.group !== "running") {
+        if (st.group === "downtime" || st.group === "offline") {
             keys.push(st.key);
         }
     }

@@ -1,133 +1,142 @@
 {
-  "timestamp": "2026-05-06T03:31:36.003Z",
+  "timestamp": "2026-05-14T12:13:04.575Z",
   "mqttMem": {
-    "ABR-003": {
-      "machine_name": "ABR-003",
-      "current_hour_actual": 673,
+    "ABR-001": {
+      "machine_name": "ABR-001",
+      "current_hour_actual": 73,
       "current_hour_ng": 0,
-      "current_hour_station_ng": {
-        "St#1 Station A": 2,
-        "St#2 Station B": 0,
-        "True_NG": 2
-      },
-      "last_cycle_time": 2.7711589895987965,
-      "sum_cycle_time": 1864.98999999999,
-      "last_update": "2026-05-06T03:31:29.335Z",
-      "current_hour_label": "10",
+      "current_hour_station_ng": {},
+      "last_cycle_time": 3.248356164383562,
+      "sum_cycle_time": 237.13000000000002,
+      "last_update": "2026-05-14T10:03:51.353Z",
+      "current_hour_label": "17",
       "live_status": "Run_Time",
-      "live_alarm": "RCON SOFT ALARM"
+      "live_alarm": "LDIN Support Tray Close : X54,X56 & Tray Clamp : X5B"
+    },
+    "ABR-002": {
+      "machine_name": "ABR-002",
+      "current_hour_actual": 79,
+      "current_hour_ng": 0,
+      "current_hour_station_ng": {},
+      "last_cycle_time": 2.994430379746835,
+      "sum_cycle_time": 236.55999999999995,
+      "last_update": "2026-05-14T10:03:54.342Z",
+      "current_hour_label": "17",
+      "live_status": "Run_Time",
+      "live_alarm": "LDIN Support Tray Load Close : X54,X56"
     },
     "AHV-001": {
       "machine_name": "AHV-001",
-      "current_hour_actual": 389,
-      "current_hour_ng": 4,
+      "current_hour_actual": 42,
+      "current_hour_ng": 6,
       "current_hour_station_ng": {
-        "St#3 Bottom Hub ECM & OD Sleeve": 1,
-        "St#5 ID Bottom": 1,
-        "St#7 ID Top": 14,
-        "St#9 ECM Conical Groove Top & Bottom": 60,
-        "St#11 Top HUB & OD Hub": 1,
-        "True_NG": 75
+        "St#9 ECM Conical Groove Top & Bottom": 5,
+        "True_NG": 6,
+        "St#7 ID Top": 1
       },
-      "last_cycle_time": 4.311619537275041,
-      "sum_cycle_time": 1677.2199999999907,
-      "last_update": "2026-05-06T03:31:30.701Z",
-      "current_hour_label": "10",
-      "live_status": "Run_Time",
-      "live_alarm": null
-    },
-    "AHV-002": {
-      "machine_name": "AHV-002",
-      "current_hour_actual": 412,
-      "current_hour_ng": 20,
-      "current_hour_station_ng": {
-        "St#3 Bottom Hub ECM & OD Sleeve": 6,
-        "St#5 ID Bottom": 20,
-        "St#7 ID Top": 11,
-        "St#9 ECM Conical Groove Top & Bottom": 31,
-        "St#11 Top HUB & OD Hub": 3,
-        "True_NG": 58
-      },
-      "last_cycle_time": 4.1303640776699115,
-      "sum_cycle_time": 1701.7100000000037,
-      "last_update": "2026-05-06T03:31:34.716Z",
-      "current_hour_label": "10",
+      "last_cycle_time": 4.286904761904762,
+      "sum_cycle_time": 180.05,
+      "last_update": "2026-05-14T10:03:59.278Z",
+      "current_hour_label": "17",
       "live_status": "Run_Time",
       "live_alarm": null
     },
     "AHV-003": {
       "machine_name": "AHV-003",
-      "current_hour_actual": 425,
-      "current_hour_ng": 25,
+      "current_hour_actual": 55,
+      "current_hour_ng": 38,
       "current_hour_station_ng": {
-        "St#3 Bottom Hub ECM & OD Sleeve": 1,
-        "St#5 ID Bottom": 22,
-        "St#7 ID Top": 20,
-        "St#9 ECM Conical Groove Top & Bottom": 77,
-        "St#11 Top HUB & OD Hub": 0,
-        "True_NG": 110
+        "St#9 ECM Conical Groove Top & Bottom": 33,
+        "True_NG": 38,
+        "St#3 Bottom Hub ECM & OD Sleeve": 4,
+        "St#7 ID Top": 8,
+        "St#5 ID Bottom": 2
       },
-      "last_cycle_time": 4.019035294117655,
-      "sum_cycle_time": 1708.0900000000033,
-      "last_update": "2026-05-06T03:31:31.269Z",
-      "current_hour_label": "10",
+      "last_cycle_time": 3.960363636363635,
+      "sum_cycle_time": 217.81999999999994,
+      "last_update": "2026-05-14T10:03:56.233Z",
+      "current_hour_label": "17",
       "live_status": "Run_Time",
       "live_alarm": null
     },
     "AHV-004": {
       "machine_name": "AHV-004",
-      "current_hour_actual": 428,
-      "current_hour_ng": 40,
+      "current_hour_actual": 35,
+      "current_hour_ng": 32,
       "current_hour_station_ng": {
-        "St#3 Bottom Hub ECM & OD Sleeve": 11,
-        "St#5 ID Bottom": 17,
-        "St#7 ID Top": 15,
-        "St#9 ECM Conical Groove Top & Bottom": 96,
-        "St#11 Top HUB & OD Hub": 26,
-        "True_NG": 142
+        "St#9 ECM Conical Groove Top & Bottom": 29,
+        "True_NG": 32,
+        "St#3 Bottom Hub ECM & OD Sleeve": 16,
+        "St#11 Top HUB & OD Hub": 8,
+        "St#5 ID Bottom": 13,
+        "St#7 ID Top": 1
       },
-      "last_cycle_time": 4.107476635514015,
-      "sum_cycle_time": 1757.9999999999982,
-      "last_update": "2026-05-06T03:30:50.278Z",
-      "current_hour_label": "10",
+      "last_cycle_time": 5.0128571428571425,
+      "sum_cycle_time": 175.45,
+      "last_update": "2026-05-14T10:03:41.032Z",
+      "current_hour_label": "17",
       "live_status": "Run_Time",
       "live_alarm": null
     },
     "AHV-005": {
       "machine_name": "AHV-005",
-      "current_hour_actual": 378,
-      "current_hour_ng": 3,
+      "current_hour_actual": 38,
+      "current_hour_ng": 15,
       "current_hour_station_ng": {
-        "St#3 Bottom Hub ECM & OD Sleeve": 6,
-        "St#5 ID Bottom": 48,
-        "St#7 ID Top": 9,
-        "St#9 ECM Conical Groove Top & Bottom": 21,
-        "St#11 Top HUB & OD Hub": 1,
-        "True_NG": 78
+        "St#5 ID Bottom": 6,
+        "True_NG": 15,
+        "St#9 ECM Conical Groove Top & Bottom": 9
       },
-      "last_cycle_time": 3.868253968253951,
-      "sum_cycle_time": 1462.1999999999935,
-      "last_update": "2026-05-06T03:29:07.796Z",
-      "current_hour_label": "10",
+      "last_cycle_time": 3.8036842105263164,
+      "sum_cycle_time": 144.54000000000002,
+      "last_update": "2026-05-14T10:03:57.450Z",
+      "current_hour_label": "17",
       "live_status": "Run_Time",
       "live_alarm": null
     },
     "AHV-006": {
       "machine_name": "AHV-006",
-      "current_hour_actual": 472,
-      "current_hour_ng": 24,
+      "current_hour_actual": 42,
+      "current_hour_ng": 5,
       "current_hour_station_ng": {
-        "St#3 Bottom Hub ECM & OD Sleeve": 0,
-        "St#5 ID Bottom": 29,
-        "St#7 ID Top": 103,
-        "St#9 ECM Conical Groove Top & Bottom": 32,
-        "St#11 Top HUB & OD Hub": 4,
-        "True_NG": 149
+        "St#7 ID Top": 4,
+        "True_NG": 5,
+        "St#11 Top HUB & OD Hub": 1
       },
-      "last_cycle_time": 3.910381355932185,
-      "sum_cycle_time": 1845.6999999999914,
-      "last_update": "2026-05-06T03:31:06.802Z",
-      "current_hour_label": "10",
+      "last_cycle_time": 3.953809523809524,
+      "sum_cycle_time": 166.06,
+      "last_update": "2026-05-14T10:03:58.683Z",
+      "current_hour_label": "17",
+      "live_status": "Run_Time",
+      "live_alarm": null
+    },
+    "ABR-003": {
+      "machine_name": "ABR-003",
+      "current_hour_actual": 80,
+      "current_hour_ng": 0,
+      "current_hour_station_ng": {},
+      "last_cycle_time": 2.952749999999999,
+      "sum_cycle_time": 236.2199999999999,
+      "last_update": "2026-05-14T10:03:54.339Z",
+      "current_hour_label": "17",
+      "live_status": "Run_Time",
+      "live_alarm": "GRIPPER APPLY A CAN'T PICK CHUCKING"
+    },
+    "AHV-002": {
+      "machine_name": "AHV-002",
+      "current_hour_actual": 51,
+      "current_hour_ng": 8,
+      "current_hour_station_ng": {
+        "St#3 Bottom Hub ECM & OD Sleeve": 1,
+        "True_NG": 8,
+        "St#9 ECM Conical Groove Top & Bottom": 5,
+        "St#11 Top HUB & OD Hub": 1,
+        "St#5 ID Bottom": 1
+      },
+      "last_cycle_time": 4.217843137254902,
+      "sum_cycle_time": 215.10999999999999,
+      "last_update": "2026-05-14T10:03:56.279Z",
+      "current_hour_label": "17",
       "live_status": "Run_Time",
       "live_alarm": null
     },
@@ -138,7 +147,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:01.996Z",
+      "last_update": "2026-05-14T01:18:19.751Z",
       "current_hour_label": ""
     },
     "ACR-002": {
@@ -148,7 +157,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:02.111Z",
+      "last_update": "2026-05-14T01:18:19.783Z",
       "current_hour_label": ""
     },
     "ACR-003": {
@@ -158,7 +167,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:02.810Z",
+      "last_update": "2026-05-14T01:18:19.832Z",
       "current_hour_label": ""
     },
     "ACR-004": {
@@ -168,7 +177,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:02.875Z",
+      "last_update": "2026-05-14T01:18:19.923Z",
       "current_hour_label": ""
     },
     "ACR-005": {
@@ -178,7 +187,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:03.406Z",
+      "last_update": "2026-05-14T01:18:20.016Z",
       "current_hour_label": ""
     },
     "ACR-006": {
@@ -188,7 +197,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:03.472Z",
+      "last_update": "2026-05-14T01:18:20.091Z",
       "current_hour_label": ""
     },
     "Chydos1": {
@@ -198,7 +207,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:03.988Z",
+      "last_update": "2026-05-14T01:18:20.172Z",
       "current_hour_label": ""
     },
     "Chydos2": {
@@ -208,7 +217,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:04.450Z",
+      "last_update": "2026-05-14T01:18:20.204Z",
       "current_hour_label": ""
     },
     "DLC-002": {
@@ -218,7 +227,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:05.972Z",
+      "last_update": "2026-05-14T01:18:20.236Z",
       "current_hour_label": ""
     },
     "DLC-003": {
@@ -228,7 +237,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:07.058Z",
+      "last_update": "2026-05-14T01:18:20.267Z",
       "current_hour_label": ""
     },
     "DLC-004": {
@@ -238,7 +247,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:07.105Z",
+      "last_update": "2026-05-14T01:18:20.315Z",
       "current_hour_label": ""
     },
     "DLC-005": {
@@ -248,7 +257,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:07.198Z",
+      "last_update": "2026-05-14T01:18:20.403Z",
       "current_hour_label": ""
     },
     "DLC-006": {
@@ -258,7 +267,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:07.620Z",
+      "last_update": "2026-05-14T01:18:20.449Z",
       "current_hour_label": ""
     },
     "DLC-007": {
@@ -268,7 +277,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.026Z",
+      "last_update": "2026-05-14T01:18:20.568Z",
       "current_hour_label": ""
     },
     "DLC-008": {
@@ -278,7 +287,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.108Z",
+      "last_update": "2026-05-14T01:18:20.649Z",
       "current_hour_label": ""
     },
     "DLC-009": {
@@ -288,7 +297,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.162Z",
+      "last_update": "2026-05-14T01:18:20.682Z",
       "current_hour_label": ""
     },
     "DLC-010": {
@@ -298,7 +307,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.191Z",
+      "last_update": "2026-05-14T01:18:20.731Z",
       "current_hour_label": ""
     },
     "DLC-011": {
@@ -308,7 +317,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.235Z",
+      "last_update": "2026-05-14T01:18:20.810Z",
       "current_hour_label": ""
     },
     "DLC-012": {
@@ -318,7 +327,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.437Z",
+      "last_update": "2026-05-14T01:18:20.866Z",
       "current_hour_label": ""
     },
     "AQS-009": {
@@ -328,7 +337,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.467Z",
+      "last_update": "2026-05-14T01:18:20.983Z",
       "current_hour_label": ""
     },
     "AVE-001": {
@@ -338,7 +347,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.493Z",
+      "last_update": "2026-05-14T01:18:21.069Z",
       "current_hour_label": ""
     },
     "WTM-001": {
@@ -348,7 +357,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.525Z",
+      "last_update": "2026-05-14T01:18:21.101Z",
       "current_hour_label": ""
     },
     "WTM-002": {
@@ -358,40 +367,8 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.554Z",
+      "last_update": "2026-05-14T01:18:21.133Z",
       "current_hour_label": ""
-    },
-    "ABR-001": {
-      "machine_name": "ABR-001",
-      "current_hour_actual": 517,
-      "current_hour_ng": 0,
-      "current_hour_station_ng": {
-        "St#1 Station A": 2,
-        "St#2 Station B": 0,
-        "True_NG": 2
-      },
-      "last_cycle_time": 2.8387427466150945,
-      "sum_cycle_time": 1467.630000000004,
-      "last_update": "2026-05-06T03:26:32.282Z",
-      "current_hour_label": "10",
-      "live_status": "Plan_Stop",
-      "live_alarm": "RCON SOFT ALARM"
-    },
-    "ABR-002": {
-      "machine_name": "ABR-002",
-      "current_hour_actual": 630,
-      "current_hour_ng": 0,
-      "current_hour_station_ng": {
-        "St#1 Station A": 0,
-        "St#2 Station B": 2,
-        "True_NG": 2
-      },
-      "last_cycle_time": 2.949238095238081,
-      "sum_cycle_time": 1858.019999999991,
-      "last_update": "2026-05-06T03:31:31.866Z",
-      "current_hour_label": "10",
-      "live_status": "Run_Time",
-      "live_alarm": "RCON SOFT ALARM"
     },
     "ABR-004": {
       "machine_name": "ABR-004",
@@ -400,7 +377,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.712Z",
+      "last_update": "2026-05-14T01:18:21.341Z",
       "current_hour_label": ""
     },
     "ABR-005": {
@@ -410,7 +387,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.743Z",
+      "last_update": "2026-05-14T01:18:21.420Z",
       "current_hour_label": ""
     },
     "ABR-006": {
@@ -420,7 +397,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.764Z",
+      "last_update": "2026-05-14T01:18:21.515Z",
       "current_hour_label": ""
     },
     "ACP-002": {
@@ -430,7 +407,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.787Z",
+      "last_update": "2026-05-14T01:18:21.548Z",
       "current_hour_label": ""
     },
     "ACP-003": {
@@ -440,7 +417,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.809Z",
+      "last_update": "2026-05-14T01:18:21.579Z",
       "current_hour_label": ""
     },
     "ACP-004": {
@@ -450,7 +427,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.861Z",
+      "last_update": "2026-05-14T01:18:21.633Z",
       "current_hour_label": ""
     },
     "ACP-005": {
@@ -460,7 +437,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.884Z",
+      "last_update": "2026-05-14T01:18:21.700Z",
       "current_hour_label": ""
     },
     "ACP-006": {
@@ -470,7 +447,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.903Z",
+      "last_update": "2026-05-14T01:18:21.786Z",
       "current_hour_label": ""
     },
     "ACP-007": {
@@ -480,7 +457,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.938Z",
+      "last_update": "2026-05-14T01:18:21.858Z",
       "current_hour_label": ""
     },
     "ACP-008": {
@@ -490,7 +467,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.965Z",
+      "last_update": "2026-05-14T01:18:21.944Z",
       "current_hour_label": ""
     },
     "ACP-009": {
@@ -500,7 +477,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:08.988Z",
+      "last_update": "2026-05-14T01:18:21.992Z",
       "current_hour_label": ""
     },
     "ACP-010": {
@@ -510,7 +487,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.035Z",
+      "last_update": "2026-05-14T01:18:22.091Z",
       "current_hour_label": ""
     },
     "ACP-011": {
@@ -520,7 +497,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.068Z",
+      "last_update": "2026-05-14T01:18:22.241Z",
       "current_hour_label": ""
     },
     "ACP-012": {
@@ -530,7 +507,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.098Z",
+      "last_update": "2026-05-14T01:18:22.326Z",
       "current_hour_label": ""
     },
     "AIU-001": {
@@ -540,7 +517,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.122Z",
+      "last_update": "2026-05-14T01:18:22.361Z",
       "current_hour_label": ""
     },
     "AIU-002": {
@@ -550,7 +527,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.151Z",
+      "last_update": "2026-05-14T01:18:22.393Z",
       "current_hour_label": ""
     },
     "AOC-001": {
@@ -560,7 +537,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.174Z",
+      "last_update": "2026-05-14T01:18:22.442Z",
       "current_hour_label": ""
     },
     "AOC-002": {
@@ -570,7 +547,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.196Z",
+      "last_update": "2026-05-14T01:18:22.525Z",
       "current_hour_label": ""
     },
     "AOC-003": {
@@ -580,7 +557,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.217Z",
+      "last_update": "2026-05-14T01:18:22.597Z",
       "current_hour_label": ""
     },
     "AOC-004": {
@@ -590,7 +567,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.266Z",
+      "last_update": "2026-05-14T01:18:22.683Z",
       "current_hour_label": ""
     },
     "AOC-005": {
@@ -600,7 +577,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.313Z",
+      "last_update": "2026-05-14T01:18:22.725Z",
       "current_hour_label": ""
     },
     "AOC-006": {
@@ -610,7 +587,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.360Z",
+      "last_update": "2026-05-14T01:18:22.809Z",
       "current_hour_label": ""
     },
     "AOC-007": {
@@ -620,7 +597,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.384Z",
+      "last_update": "2026-05-14T01:18:22.841Z",
       "current_hour_label": ""
     },
     "AFU-002": {
@@ -630,7 +607,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.409Z",
+      "last_update": "2026-05-14T01:18:22.884Z",
       "current_hour_label": ""
     },
     "AFU-003": {
@@ -640,7 +617,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.460Z",
+      "last_update": "2026-05-14T01:18:22.963Z",
       "current_hour_label": ""
     },
     "AFU-004": {
@@ -650,7 +627,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.494Z",
+      "last_update": "2026-05-14T01:18:23.064Z",
       "current_hour_label": ""
     },
     "ARA-001": {
@@ -660,7 +637,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.523Z",
+      "last_update": "2026-05-14T01:18:23.226Z",
       "current_hour_label": ""
     },
     "ART-002": {
@@ -670,7 +647,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.557Z",
+      "last_update": "2026-05-14T01:18:23.260Z",
       "current_hour_label": ""
     },
     "ART-004": {
@@ -680,7 +657,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.598Z",
+      "last_update": "2026-05-14T01:18:23.309Z",
       "current_hour_label": ""
     },
     "ART-006": {
@@ -690,7 +667,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.626Z",
+      "last_update": "2026-05-14T01:18:23.454Z",
       "current_hour_label": ""
     },
     "ART-009": {
@@ -700,7 +677,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.652Z",
+      "last_update": "2026-05-14T01:18:23.603Z",
       "current_hour_label": ""
     },
     "ART-010": {
@@ -710,7 +687,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.738Z",
+      "last_update": "2026-05-14T01:18:23.636Z",
       "current_hour_label": ""
     },
     "ART-011": {
@@ -720,7 +697,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.762Z",
+      "last_update": "2026-05-14T01:18:23.671Z",
       "current_hour_label": ""
     },
     "ART-013": {
@@ -730,7 +707,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.811Z",
+      "last_update": "2026-05-14T01:18:23.702Z",
       "current_hour_label": ""
     },
     "ART-015": {
@@ -740,7 +717,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.831Z",
+      "last_update": "2026-05-14T01:18:23.792Z",
       "current_hour_label": ""
     },
     "ART-016": {
@@ -750,7 +727,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:09.943Z",
+      "last_update": "2026-05-14T01:18:23.891Z",
       "current_hour_label": ""
     },
     "ART-018": {
@@ -760,7 +737,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:10.809Z",
+      "last_update": "2026-05-14T01:18:23.980Z",
       "current_hour_label": ""
     },
     "ART-021": {
@@ -770,7 +747,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:10.834Z",
+      "last_update": "2026-05-14T01:18:24.070Z",
       "current_hour_label": ""
     },
     "ATX-002": {
@@ -780,7 +757,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:10.897Z",
+      "last_update": "2026-05-14T01:18:24.123Z",
       "current_hour_label": ""
     },
     "ATX-003": {
@@ -790,7 +767,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.008Z",
+      "last_update": "2026-05-14T01:18:24.214Z",
       "current_hour_label": ""
     },
     "ATX-004": {
@@ -800,7 +777,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.140Z",
+      "last_update": "2026-05-14T01:18:24.312Z",
       "current_hour_label": ""
     },
     "STC-001": {
@@ -810,7 +787,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.771Z",
+      "last_update": "2026-05-14T01:18:24.472Z",
       "current_hour_label": ""
     },
     "FSPZ": {
@@ -820,7 +797,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.830Z",
+      "last_update": "2026-05-14T01:18:24.507Z",
       "current_hour_label": ""
     },
     "GE2-001": {
@@ -830,7 +807,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.854Z",
+      "last_update": "2026-05-14T01:18:24.539Z",
       "current_hour_label": ""
     },
     "GE2-002": {
@@ -840,7 +817,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.874Z",
+      "last_update": "2026-05-14T01:18:24.569Z",
       "current_hour_label": ""
     },
     "GE2-003": {
@@ -850,7 +827,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.898Z",
+      "last_update": "2026-05-14T01:18:24.617Z",
       "current_hour_label": ""
     },
     "GE2-004": {
@@ -860,7 +837,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.937Z",
+      "last_update": "2026-05-14T01:18:24.750Z",
       "current_hour_label": ""
     },
     "GE2-005": {
@@ -870,7 +847,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.960Z",
+      "last_update": "2026-05-14T01:18:24.845Z",
       "current_hour_label": ""
     },
     "GE2-006": {
@@ -880,7 +857,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:11.977Z",
+      "last_update": "2026-05-14T01:18:24.949Z",
       "current_hour_label": ""
     },
     "GE2-007": {
@@ -890,7 +867,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.041Z",
+      "last_update": "2026-05-14T01:18:24.981Z",
       "current_hour_label": ""
     },
     "GE2-008": {
@@ -900,7 +877,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.536Z",
+      "last_update": "2026-05-14T01:18:25.013Z",
       "current_hour_label": ""
     },
     "GE2-009": {
@@ -910,7 +887,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.579Z",
+      "last_update": "2026-05-14T01:18:25.063Z",
       "current_hour_label": ""
     },
     "GE2-010": {
@@ -920,7 +897,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.624Z",
+      "last_update": "2026-05-14T01:18:25.123Z",
       "current_hour_label": ""
     },
     "GE2-011": {
@@ -930,7 +907,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.647Z",
+      "last_update": "2026-05-14T01:18:25.190Z",
       "current_hour_label": ""
     },
     "GE2-012": {
@@ -940,7 +917,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.674Z",
+      "last_update": "2026-05-14T01:18:25.266Z",
       "current_hour_label": ""
     },
     "GE2-013": {
@@ -950,7 +927,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.694Z",
+      "last_update": "2026-05-14T01:18:25.401Z",
       "current_hour_label": ""
     },
     "GE2-014": {
@@ -960,7 +937,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.719Z",
+      "last_update": "2026-05-14T01:18:25.435Z",
       "current_hour_label": ""
     },
     "GE2-015": {
@@ -970,7 +947,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.745Z",
+      "last_update": "2026-05-14T01:18:25.466Z",
       "current_hour_label": ""
     },
     "GE2-016": {
@@ -980,7 +957,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.764Z",
+      "last_update": "2026-05-14T01:18:25.523Z",
       "current_hour_label": ""
     },
     "GE2-017": {
@@ -990,7 +967,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.792Z",
+      "last_update": "2026-05-14T01:18:25.591Z",
       "current_hour_label": ""
     },
     "GE2-018": {
@@ -1000,7 +977,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.820Z",
+      "last_update": "2026-05-14T01:18:25.646Z",
       "current_hour_label": ""
     },
     "GE2-019": {
@@ -1010,7 +987,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.848Z",
+      "last_update": "2026-05-14T01:18:25.765Z",
       "current_hour_label": ""
     },
     "GE2-020": {
@@ -1020,7 +997,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.872Z",
+      "last_update": "2026-05-14T01:18:25.842Z",
       "current_hour_label": ""
     },
     "GE2-021": {
@@ -1030,7 +1007,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.903Z",
+      "last_update": "2026-05-14T01:18:25.875Z",
       "current_hour_label": ""
     },
     "GE2-022": {
@@ -1040,7 +1017,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.934Z",
+      "last_update": "2026-05-14T01:18:25.932Z",
       "current_hour_label": ""
     },
     "GE2-033": {
@@ -1050,7 +1027,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:12.974Z",
+      "last_update": "2026-05-14T01:18:26.001Z",
       "current_hour_label": ""
     },
     "GE2-034": {
@@ -1060,7 +1037,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.008Z",
+      "last_update": "2026-05-14T01:18:26.086Z",
       "current_hour_label": ""
     },
     "GE2-035": {
@@ -1070,7 +1047,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.046Z",
+      "last_update": "2026-05-14T01:18:26.151Z",
       "current_hour_label": ""
     },
     "GE2-036": {
@@ -1080,7 +1057,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.403Z",
+      "last_update": "2026-05-14T01:18:26.277Z",
       "current_hour_label": ""
     },
     "GE2-038": {
@@ -1090,7 +1067,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.465Z",
+      "last_update": "2026-05-14T01:18:26.311Z",
       "current_hour_label": ""
     },
     "GE2-039": {
@@ -1100,7 +1077,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.488Z",
+      "last_update": "2026-05-14T01:18:26.358Z",
       "current_hour_label": ""
     },
     "GE2-040": {
@@ -1110,7 +1087,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.512Z",
+      "last_update": "2026-05-14T01:18:26.444Z",
       "current_hour_label": ""
     },
     "GE3-001": {
@@ -1120,7 +1097,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.549Z",
+      "last_update": "2026-05-14T01:18:26.520Z",
       "current_hour_label": ""
     },
     "GE3-003": {
@@ -1130,7 +1107,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.577Z",
+      "last_update": "2026-05-14T01:18:26.614Z",
       "current_hour_label": ""
     },
     "GE3-007": {
@@ -1140,7 +1117,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.599Z",
+      "last_update": "2026-05-14T01:18:26.697Z",
       "current_hour_label": ""
     },
     "GE3-008": {
@@ -1150,7 +1127,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.651Z",
+      "last_update": "2026-05-14T01:18:26.733Z",
       "current_hour_label": ""
     },
     "GE3-009": {
@@ -1160,7 +1137,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.686Z",
+      "last_update": "2026-05-14T01:18:26.763Z",
       "current_hour_label": ""
     },
     "GE3-010": {
@@ -1170,7 +1147,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.714Z",
+      "last_update": "2026-05-14T01:18:26.803Z",
       "current_hour_label": ""
     },
     "HEL-001": {
@@ -1180,7 +1157,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.744Z",
+      "last_update": "2026-05-14T01:18:26.866Z",
       "current_hour_label": ""
     },
     "HEL-002": {
@@ -1190,7 +1167,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.775Z",
+      "last_update": "2026-05-14T01:18:26.950Z",
       "current_hour_label": ""
     },
     "HEL-003": {
@@ -1200,7 +1177,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.806Z",
+      "last_update": "2026-05-14T01:18:27.045Z",
       "current_hour_label": ""
     },
     "HEL-004": {
@@ -1210,7 +1187,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.869Z",
+      "last_update": "2026-05-14T01:18:27.128Z",
       "current_hour_label": ""
     },
     "HEL-005": {
@@ -1220,7 +1197,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.893Z",
+      "last_update": "2026-05-14T01:18:27.163Z",
       "current_hour_label": ""
     },
     "HEL-006": {
@@ -1230,7 +1207,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.928Z",
+      "last_update": "2026-05-14T01:18:27.196Z",
       "current_hour_label": ""
     },
     "HEL-007": {
@@ -1240,7 +1217,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.947Z",
+      "last_update": "2026-05-14T01:18:27.298Z",
       "current_hour_label": ""
     },
     "HEL-017": {
@@ -1250,7 +1227,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:13.984Z",
+      "last_update": "2026-05-14T01:18:27.396Z",
       "current_hour_label": ""
     },
     "HEL-018": {
@@ -1260,7 +1237,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.026Z",
+      "last_update": "2026-05-14T01:18:27.468Z",
       "current_hour_label": ""
     },
     "HEL-026": {
@@ -1270,7 +1247,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.068Z",
+      "last_update": "2026-05-14T01:18:27.548Z",
       "current_hour_label": ""
     },
     "HEL-028": {
@@ -1280,7 +1257,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.188Z",
+      "last_update": "2026-05-14T01:18:27.583Z",
       "current_hour_label": ""
     },
     "HEL-030": {
@@ -1290,7 +1267,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.213Z",
+      "last_update": "2026-05-14T01:18:27.615Z",
       "current_hour_label": ""
     },
     "HEL-032": {
@@ -1300,7 +1277,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.404Z",
+      "last_update": "2026-05-14T01:18:27.664Z",
       "current_hour_label": ""
     },
     "HEL-033": {
@@ -1310,7 +1287,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.443Z",
+      "last_update": "2026-05-14T01:18:27.752Z",
       "current_hour_label": ""
     },
     "HEL-036": {
@@ -1320,7 +1297,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.482Z",
+      "last_update": "2026-05-14T01:18:27.803Z",
       "current_hour_label": ""
     },
     "HEL-040": {
@@ -1330,7 +1307,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.508Z",
+      "last_update": "2026-05-14T01:18:27.868Z",
       "current_hour_label": ""
     },
     "HEL-041": {
@@ -1340,7 +1317,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.530Z",
+      "last_update": "2026-05-14T01:18:28.052Z",
       "current_hour_label": ""
     },
     "HEL-043": {
@@ -1350,7 +1327,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.574Z",
+      "last_update": "2026-05-14T01:18:28.095Z",
       "current_hour_label": ""
     },
     "HEL-044": {
@@ -1360,7 +1337,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.608Z",
+      "last_update": "2026-05-14T01:18:28.149Z",
       "current_hour_label": ""
     },
     "HEL-046": {
@@ -1370,7 +1347,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.627Z",
+      "last_update": "2026-05-14T01:18:28.238Z",
       "current_hour_label": ""
     },
     "HEL-047": {
@@ -1380,7 +1357,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.673Z",
+      "last_update": "2026-05-14T01:18:28.303Z",
       "current_hour_label": ""
     },
     "HEL-048": {
@@ -1390,7 +1367,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.746Z",
+      "last_update": "2026-05-14T01:18:28.357Z",
       "current_hour_label": ""
     },
     "HEL-049": {
@@ -1400,7 +1377,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:14.928Z",
+      "last_update": "2026-05-14T01:18:28.488Z",
       "current_hour_label": ""
     },
     "HEL-050": {
@@ -1410,7 +1387,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.310Z",
+      "last_update": "2026-05-14T01:18:28.521Z",
       "current_hour_label": ""
     },
     "HEL-051": {
@@ -1420,7 +1397,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.337Z",
+      "last_update": "2026-05-14T01:18:28.551Z",
       "current_hour_label": ""
     },
     "HEL-052": {
@@ -1430,7 +1407,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.356Z",
+      "last_update": "2026-05-14T01:18:28.712Z",
       "current_hour_label": ""
     },
     "HEL-053": {
@@ -1440,7 +1417,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.398Z",
+      "last_update": "2026-05-14T01:18:28.995Z",
       "current_hour_label": ""
     },
     "HEL-055": {
@@ -1450,7 +1427,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.427Z",
+      "last_update": "2026-05-14T01:18:29.165Z",
       "current_hour_label": ""
     },
     "HEL-056": {
@@ -1460,7 +1437,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.458Z",
+      "last_update": "2026-05-14T01:18:29.366Z",
       "current_hour_label": ""
     },
     "HEL-057": {
@@ -1470,7 +1447,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.524Z",
+      "last_update": "2026-05-14T01:18:29.526Z",
       "current_hour_label": ""
     },
     "LSM-001": {
@@ -1480,7 +1457,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.552Z",
+      "last_update": "2026-05-14T01:18:29.861Z",
       "current_hour_label": ""
     },
     "LSM-002": {
@@ -1490,7 +1467,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.595Z",
+      "last_update": "2026-05-14T01:18:29.922Z",
       "current_hour_label": ""
     },
     "LSW-001": {
@@ -1500,7 +1477,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.624Z",
+      "last_update": "2026-05-14T01:18:30.077Z",
       "current_hour_label": ""
     },
     "LSW-002": {
@@ -1510,7 +1487,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.647Z",
+      "last_update": "2026-05-14T01:18:30.278Z",
       "current_hour_label": ""
     },
     "LSW-003": {
@@ -1520,7 +1497,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.686Z",
+      "last_update": "2026-05-14T01:18:30.314Z",
       "current_hour_label": ""
     },
     "LSW-004": {
@@ -1530,7 +1507,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.740Z",
+      "last_update": "2026-05-14T01:18:30.476Z",
       "current_hour_label": ""
     },
     "LSW-005": {
@@ -1540,7 +1517,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.804Z",
+      "last_update": "2026-05-14T01:18:30.535Z",
       "current_hour_label": ""
     },
     "LSW-006": {
@@ -1550,7 +1527,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.834Z",
+      "last_update": "2026-05-14T01:18:30.700Z",
       "current_hour_label": ""
     },
     "LSW-009": {
@@ -1560,7 +1537,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.858Z",
+      "last_update": "2026-05-14T01:18:30.733Z",
       "current_hour_label": ""
     },
     "LSW-017": {
@@ -1570,7 +1547,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.925Z",
+      "last_update": "2026-05-14T01:18:30.765Z",
       "current_hour_label": ""
     },
     "LSW-019": {
@@ -1580,7 +1557,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.950Z",
+      "last_update": "2026-05-14T01:18:30.903Z",
       "current_hour_label": ""
     },
     "LSW-024": {
@@ -1590,7 +1567,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:15.972Z",
+      "last_update": "2026-05-14T01:18:30.971Z",
       "current_hour_label": ""
     },
     "LSW-025": {
@@ -1600,7 +1577,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.044Z",
+      "last_update": "2026-05-14T01:18:31.136Z",
       "current_hour_label": ""
     },
     "LSW-026": {
@@ -1610,7 +1587,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.064Z",
+      "last_update": "2026-05-14T01:18:31.249Z",
       "current_hour_label": ""
     },
     "LSW-027": {
@@ -1620,7 +1597,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.097Z",
+      "last_update": "2026-05-14T01:18:31.341Z",
       "current_hour_label": ""
     },
     "LSW-028": {
@@ -1630,7 +1607,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.127Z",
+      "last_update": "2026-05-14T01:18:31.541Z",
       "current_hour_label": ""
     },
     "LSW-029": {
@@ -1640,7 +1617,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.157Z",
+      "last_update": "2026-05-14T01:18:31.577Z",
       "current_hour_label": ""
     },
     "LSW-030": {
@@ -1650,7 +1627,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.178Z",
+      "last_update": "2026-05-14T01:18:31.715Z",
       "current_hour_label": ""
     },
     "LSW-031": {
@@ -1660,7 +1637,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.212Z",
+      "last_update": "2026-05-14T01:18:31.789Z",
       "current_hour_label": ""
     },
     "LSW-032": {
@@ -1670,7 +1647,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.261Z",
+      "last_update": "2026-05-14T01:18:31.972Z",
       "current_hour_label": ""
     },
     "LSW-033": {
@@ -1680,7 +1657,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.284Z",
+      "last_update": "2026-05-14T01:18:32.150Z",
       "current_hour_label": ""
     },
     "LSW-034": {
@@ -1690,7 +1667,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.307Z",
+      "last_update": "2026-05-14T01:18:32.226Z",
       "current_hour_label": ""
     },
     "LSW-035": {
@@ -1700,7 +1677,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.360Z",
+      "last_update": "2026-05-14T01:18:32.344Z",
       "current_hour_label": ""
     },
     "VNS-001": {
@@ -1710,7 +1687,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.381Z",
+      "last_update": "2026-05-14T01:18:32.428Z",
       "current_hour_label": ""
     },
     "VNS-002": {
@@ -1720,7 +1697,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.425Z",
+      "last_update": "2026-05-14T01:18:32.461Z",
       "current_hour_label": ""
     },
     "VNS-003": {
@@ -1730,7 +1707,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.450Z",
+      "last_update": "2026-05-14T01:18:32.496Z",
       "current_hour_label": ""
     },
     "VNS-004": {
@@ -1740,7 +1717,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.512Z",
+      "last_update": "2026-05-14T01:18:32.592Z",
       "current_hour_label": ""
     },
     "VNS-005": {
@@ -1750,7 +1727,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.560Z",
+      "last_update": "2026-05-14T01:18:32.688Z",
       "current_hour_label": ""
     },
     "VNS-006": {
@@ -1760,7 +1737,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.589Z",
+      "last_update": "2026-05-14T01:18:32.762Z",
       "current_hour_label": ""
     },
     "VNS-007": {
@@ -1770,7 +1747,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.630Z",
+      "last_update": "2026-05-14T01:18:32.864Z",
       "current_hour_label": ""
     },
     "VNS-008": {
@@ -1780,7 +1757,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.821Z",
+      "last_update": "2026-05-14T01:18:32.922Z",
       "current_hour_label": ""
     },
     "VNS-009": {
@@ -1790,7 +1767,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:16.877Z",
+      "last_update": "2026-05-14T01:18:32.989Z",
       "current_hour_label": ""
     },
     "VNS-010": {
@@ -1800,7 +1777,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.544Z",
+      "last_update": "2026-05-14T01:18:33.078Z",
       "current_hour_label": ""
     },
     "VNS-012": {
@@ -1810,7 +1787,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.567Z",
+      "last_update": "2026-05-14T01:18:33.284Z",
       "current_hour_label": ""
     },
     "VNS-013": {
@@ -1820,7 +1797,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.591Z",
+      "last_update": "2026-05-14T01:18:33.336Z",
       "current_hour_label": ""
     },
     "VNS-014": {
@@ -1830,7 +1807,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.616Z",
+      "last_update": "2026-05-14T01:18:33.384Z",
       "current_hour_label": ""
     },
     "VNS-015": {
@@ -1840,7 +1817,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.645Z",
+      "last_update": "2026-05-14T01:18:33.487Z",
       "current_hour_label": ""
     },
     "VNS-016": {
@@ -1850,7 +1827,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.683Z",
+      "last_update": "2026-05-14T01:18:33.551Z",
       "current_hour_label": ""
     },
     "VNS-017": {
@@ -1860,7 +1837,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.733Z",
+      "last_update": "2026-05-14T01:18:33.636Z",
       "current_hour_label": ""
     },
     "VNS-018": {
@@ -1870,7 +1847,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.757Z",
+      "last_update": "2026-05-14T01:18:33.724Z",
       "current_hour_label": ""
     },
     "VNS-019": {
@@ -1880,7 +1857,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.778Z",
+      "last_update": "2026-05-14T01:18:33.758Z",
       "current_hour_label": ""
     },
     "VNS-020": {
@@ -1890,7 +1867,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.801Z",
+      "last_update": "2026-05-14T01:18:33.791Z",
       "current_hour_label": ""
     },
     "VNS-021": {
@@ -1900,7 +1877,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.833Z",
+      "last_update": "2026-05-14T01:18:33.887Z",
       "current_hour_label": ""
     },
     "VNS-022": {
@@ -1910,7 +1887,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.853Z",
+      "last_update": "2026-05-14T01:18:33.961Z",
       "current_hour_label": ""
     },
     "VNS-023": {
@@ -1920,7 +1897,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:17.884Z",
+      "last_update": "2026-05-14T01:18:34.176Z",
       "current_hour_label": ""
     },
     "VNS-024": {
@@ -1930,7 +1907,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:18.398Z",
+      "last_update": "2026-05-14T01:18:34.215Z",
       "current_hour_label": ""
     },
     "VNS-025": {
@@ -1940,7 +1917,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:18.449Z",
+      "last_update": "2026-05-14T01:18:34.273Z",
       "current_hour_label": ""
     },
     "VNS-026": {
@@ -1950,7 +1927,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:18.469Z",
+      "last_update": "2026-05-14T01:18:34.417Z",
       "current_hour_label": ""
     },
     "ACI-001": {
@@ -1960,7 +1937,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:18.515Z",
+      "last_update": "2026-05-14T01:18:34.513Z",
       "current_hour_label": ""
     },
     "ACI-002": {
@@ -1970,7 +1947,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:18.537Z",
+      "last_update": "2026-05-14T01:18:34.616Z",
       "current_hour_label": ""
     },
     "ACI-003": {
@@ -1980,7 +1957,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:18.573Z",
+      "last_update": "2026-05-14T01:18:34.660Z",
       "current_hour_label": ""
     },
     "ASI-001": {
@@ -1990,7 +1967,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:18.598Z",
+      "last_update": "2026-05-14T01:18:34.711Z",
       "current_hour_label": ""
     },
     "ASI-002": {
@@ -2000,7 +1977,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:18.623Z",
+      "last_update": "2026-05-14T01:18:34.810Z",
       "current_hour_label": ""
     },
     "ASI-003": {
@@ -2010,7 +1987,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:18.930Z",
+      "last_update": "2026-05-14T01:18:34.885Z",
       "current_hour_label": ""
     },
     "LSM-003": {
@@ -2020,7 +1997,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.173Z",
+      "last_update": "2026-05-14T01:18:34.983Z",
       "current_hour_label": ""
     },
     "LSM-004": {
@@ -2030,7 +2007,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.202Z",
+      "last_update": "2026-05-14T01:18:35.060Z",
       "current_hour_label": ""
     },
     "LSM-006": {
@@ -2040,7 +2017,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.225Z",
+      "last_update": "2026-05-14T01:18:35.092Z",
       "current_hour_label": ""
     },
     "WSM-001": {
@@ -2050,7 +2027,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.244Z",
+      "last_update": "2026-05-14T01:18:35.123Z",
       "current_hour_label": ""
     },
     "WSM-002": {
@@ -2060,7 +2037,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.268Z",
+      "last_update": "2026-05-14T01:18:35.160Z",
       "current_hour_label": ""
     },
     "VCM-001": {
@@ -2070,7 +2047,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.289Z",
+      "last_update": "2026-05-14T01:18:35.217Z",
       "current_hour_label": ""
     },
     "VCM-002": {
@@ -2080,7 +2057,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.316Z",
+      "last_update": "2026-05-14T01:18:35.284Z",
       "current_hour_label": ""
     },
     "ARA-002": {
@@ -2090,7 +2067,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.337Z",
+      "last_update": "2026-05-14T01:18:35.334Z",
       "current_hour_label": ""
     },
     "ART-019": {
@@ -2100,7 +2077,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.359Z",
+      "last_update": "2026-05-14T01:18:35.542Z",
       "current_hour_label": ""
     },
     "ATX-001": {
@@ -2110,7 +2087,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.394Z",
+      "last_update": "2026-05-14T01:18:35.580Z",
       "current_hour_label": ""
     },
     "LSM-005": {
@@ -2120,7 +2097,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.422Z",
+      "last_update": "2026-05-14T01:18:35.614Z",
       "current_hour_label": ""
     },
     "LSW-021": {
@@ -2130,7 +2107,7 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.439Z",
+      "last_update": "2026-05-14T01:18:35.661Z",
       "current_hour_label": ""
     },
     "VNS-011": {
@@ -2140,81 +2117,81 @@
       "current_hour_station_ng": {},
       "last_cycle_time": 0,
       "sum_cycle_time": 0,
-      "last_update": "2026-04-21T03:39:19.472Z",
+      "last_update": "2026-05-14T01:18:35.711Z",
       "current_hour_label": ""
     }
   },
   "oeeState": {
-    "ABR-003": {
-      "runTimeSec": 11399,
-      "excludedSec": 0,
+    "ABR-001": {
+      "runTimeSec": 25890,
+      "excludedSec": 7988,
       "lastStatus": "Run_Time",
-      "lastStatusTime": "2026-05-06T03:14:52.000Z",
-      "shiftDate": "2026-05-06",
-      "manualNgQty": 0
-    },
-    "AHV-001": {
-      "runTimeSec": 5444,
-      "excludedSec": 0,
-      "lastStatus": "Run_Time",
-      "lastStatusTime": "2026-05-06T02:48:48.000Z",
-      "shiftDate": "2026-05-06",
-      "manualNgQty": 0
-    },
-    "AHV-002": {
-      "runTimeSec": 10954,
-      "excludedSec": 0,
-      "lastStatus": "Run_Time",
-      "lastStatusTime": "2026-05-06T03:20:49.000Z",
-      "shiftDate": "2026-05-06",
-      "manualNgQty": 0
-    },
-    "AHV-003": {
-      "runTimeSec": 8565,
-      "excludedSec": 0,
-      "lastStatus": "Run_Time",
-      "lastStatusTime": "2026-05-06T03:26:01.000Z",
-      "shiftDate": "2026-05-06",
-      "manualNgQty": 0
-    },
-    "AHV-004": {
-      "runTimeSec": 4775,
-      "excludedSec": 0,
-      "lastStatus": "Run_Time",
-      "lastStatusTime": "2026-05-06T02:59:11.000Z",
-      "shiftDate": "2026-05-06",
-      "manualNgQty": 0
-    },
-    "AHV-005": {
-      "runTimeSec": 4646,
-      "excludedSec": 0,
-      "lastStatus": "Run_Time",
-      "lastStatusTime": "2026-05-06T02:53:06.000Z",
-      "shiftDate": "2026-05-06",
-      "manualNgQty": 0
-    },
-    "AHV-006": {
-      "runTimeSec": 6341,
-      "excludedSec": 0,
-      "lastStatus": "Run_Time",
-      "lastStatusTime": "2026-05-06T02:57:19.000Z",
-      "shiftDate": "2026-05-06",
+      "lastStatusTime": "2026-05-14T09:44:32.000Z",
+      "shiftDate": "2026-05-14",
       "manualNgQty": 0
     },
     "ABR-002": {
-      "runTimeSec": 10010,
-      "excludedSec": 0,
+      "runTimeSec": 12532,
+      "excludedSec": 22014,
       "lastStatus": "Run_Time",
-      "lastStatusTime": "2026-05-06T03:07:19.000Z",
-      "shiftDate": "2026-05-06",
+      "lastStatusTime": "2026-05-14T09:48:35.000Z",
+      "shiftDate": "2026-05-14",
       "manualNgQty": 0
     },
-    "ABR-001": {
-      "runTimeSec": 4337,
-      "excludedSec": 3307,
+    "ABR-003": {
+      "runTimeSec": 34527.18,
+      "excludedSec": 0,
       "lastStatus": "Run_Time",
-      "lastStatusTime": "2026-05-06T03:24:30.000Z",
-      "shiftDate": "2026-05-06",
+      "lastStatusTime": "2026-05-14T10:06:15.047Z",
+      "shiftDate": "2026-05-14",
+      "manualNgQty": 0
+    },
+    "AHV-001": {
+      "runTimeSec": 29995,
+      "excludedSec": 0,
+      "lastStatus": "Run_Time",
+      "lastStatusTime": "2026-05-14T09:38:20.000Z",
+      "shiftDate": "2026-05-14",
+      "manualNgQty": 0
+    },
+    "AHV-002": {
+      "runTimeSec": 28442,
+      "excludedSec": 0,
+      "lastStatus": "Run_Time",
+      "lastStatusTime": "2026-05-14T09:41:39.000Z",
+      "shiftDate": "2026-05-14",
+      "manualNgQty": 0
+    },
+    "AHV-003": {
+      "runTimeSec": 25466,
+      "excludedSec": 2,
+      "lastStatus": "Run_Time",
+      "lastStatusTime": "2026-05-14T09:38:13.000Z",
+      "shiftDate": "2026-05-14",
+      "manualNgQty": 0
+    },
+    "AHV-004": {
+      "runTimeSec": 32540,
+      "excludedSec": 0,
+      "lastStatus": "Run_Time",
+      "lastStatusTime": "2026-05-14T09:50:30.000Z",
+      "shiftDate": "2026-05-14",
+      "manualNgQty": 0
+    },
+    "AHV-005": {
+      "runTimeSec": 30620,
+      "excludedSec": 0,
+      "lastStatus": "Run_Time",
+      "lastStatusTime": "2026-05-14T09:15:29.000Z",
+      "shiftDate": "2026-05-14",
+      "manualNgQty": 0
+    },
+    "AHV-006": {
+      "runTimeSec": 31677,
+      "excludedSec": 0,
+      "lastStatus": "Run_Time",
+      "lastStatusTime": "2026-05-14T09:26:56.000Z",
+      "shiftDate": "2026-05-14",
       "manualNgQty": 0
     }
   }

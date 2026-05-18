@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node tests/oeeCalcService.unit.js"
+    "test": "node tests/oeeCalcService.unit.js && node tests/reportDashboardService.unit.js"
   },
   "author": "",
   "license": "ISC",

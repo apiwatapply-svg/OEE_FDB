@@ -199,15 +199,18 @@ export default function OverallMachineCard({
             const newOee = daily.oee > 0 ? daily.oee : prev.oee;
             // ✅ รับค่า availability จาก realtime_update (ผ่าน daily.availability)
             // ถ้ายังไม่มี (รอบ fast loop ที่ไม่ส่ง availability) ให้คงค่าเดิม
-            const newAvailability = (daily.availability !== undefined && daily.availability > 0)
+            const newAvailability = daily.availability !== undefined
                 ? daily.availability
                 : prev.availabilityActual;
+            const newCtActual = daily.avgCycleTime > 0
+                ? daily.avgCycleTime
+                : prev.ctActual;
 
             if (
                 prev.outputActual === daily.totalOutput &&
                 prev.outputTarget === daily.accumTarget &&
                 prev.achieve === daily.achieve &&
-                prev.ctActual === daily.avgCycleTime &&
+                prev.ctActual === newCtActual &&
                 prev.effActual === daily.overallEfficiency &&
                 prev.oee === newOee &&
                 prev.availabilityActual === newAvailability
@@ -220,7 +223,7 @@ export default function OverallMachineCard({
                 outputActual: daily.totalOutput,
                 outputTarget: daily.accumTarget,
                 achieve: daily.achieve,
-                ctActual: daily.avgCycleTime,
+                ctActual: newCtActual,
                 effActual: daily.overallEfficiency,
                 availabilityActual: newAvailability,   // ✅ อัปเดตค่า Availability จริง
                 oee: newOee,
@@ -290,11 +293,21 @@ export default function OverallMachineCard({
 
             // ✅ Sync ทุกแท่งที่ผ่านมาแล้ว + ปัจจุบัน
             // Phase 10: เปลี่ยนจาก hourly.efficiency → hourly.availability (Backend Phase 7)
-            if (hourly.cycleTime && hourly.availability) {
-                for (let i = 0; i <= shiftIndex && i < hourly.cycleTime.length; i++) {
-                    newCtActual[i] = hourly.cycleTime[i];
-                    newEffActual[i] = hourly.availability[i];
+            const serverCt = hourly?.cycleTime;
+            const serverAvail = hourly?.availability;
+            if (serverCt) {
+                for (let i = 0; i <= shiftIndex && i < serverCt.length; i++) {
+                    newCtActual[i] = serverCt[i];
                 }
+            } else if (currentHour?.cycleTime !== undefined) {
+                newCtActual[shiftIndex] = currentHour.cycleTime;
+            }
+            if (serverAvail) {
+                for (let i = 0; i <= shiftIndex && i < serverAvail.length; i++) {
+                    newEffActual[i] = serverAvail[i];
+                }
+            } else if (currentHour?.availability !== undefined || currentHour?.efficiency !== undefined) {
+                newEffActual[shiftIndex] = currentHour.availability ?? currentHour.efficiency;
             }
 
             // 🛑 Bail out

@@ -30,6 +30,83 @@ const SHIFT_HOURS = [
     "19", "20", "21", "22", "23", "00", "01", "02", "03", "04", "05", "06",
 ];
 
+function hasPositiveValue(values) {
+    return Array.isArray(values) && values.some((value) => Number(value) > 0);
+}
+
+function getCycleValue(source, hour) {
+    if (!source) return 0;
+    if (source.cycleTime) return Number(source.cycleTime[`cycle_${hour}`] || 0);
+    return Number(source[`cycle_${hour}`] || 0);
+}
+
+function calcWeightedAvgCycleTime(cycleSource, actualByHour) {
+    let weightedCt = 0;
+    let outputForCt = 0;
+
+    for (const hour of SHIFT_HOURS) {
+        const output = Number(actualByHour[`actual_${hour}`] || 0);
+        const cycleTime = getCycleValue(cycleSource, hour);
+        if (output > 0 && cycleTime > 0) {
+            weightedCt += cycleTime * output;
+            outputForCt += output;
+        }
+    }
+
+    return outputForCt > 0 ? weightedCt / outputForCt : 0;
+}
+
+async function loadCycleTimeRow(machineName, targetDate) {
+    return prisma.tb_cycle_time_actual.findFirst({
+        where: { machine_name: machineName, date: targetDate },
+    });
+}
+
+async function loadAvailabilityArray(machineName, targetDate) {
+    const availRow = await prisma.tb_availability_actual.findFirst({
+        where: { machine_name: machineName, date: targetDate },
+    });
+    if (availRow) {
+        return SHIFT_HOURS.map((hour) => availRow[`avail_${hour}`] || 0);
+    }
+
+    const effRow = await prisma.tb_efficiency_actual.findFirst({
+        where: { machine_name: machineName, date: targetDate },
+    });
+    return SHIFT_HOURS.map((hour) => effRow ? (effRow[`eff_${hour}`] || 0) : 0);
+}
+
+async function calcMssqlMcStatusDurations(machineName, startUTC, endUTC) {
+    const TH_OFFSET_MS = 7 * 60 * 60 * 1000;
+    const startTH = new Date(startUTC.getTime() + TH_OFFSET_MS);
+    const endTH = new Date(endUTC.getTime() + TH_OFFSET_MS);
+
+    const rows = await prisma.tb_MCStatus.findMany({
+        where: { MC: machineName, Datetime: { gte: startTH, lte: endTH } },
+        orderBy: { Datetime: "asc" },
+        select: { MC: true, Datetime: true, MCStatus: true },
+    });
+    const carryRows = await prisma.$queryRaw`
+        SELECT MC, MCStatus, Datetime FROM (
+            SELECT MC, MCStatus, Datetime,
+                   ROW_NUMBER() OVER (PARTITION BY MC ORDER BY Datetime DESC) AS rn
+            FROM tb_MCStatus WHERE MC = ${machineName} AND Datetime < ${startTH}
+        ) t WHERE rn = 1
+    `;
+
+    const records = [];
+    if (carryRows && carryRows.length > 0) {
+        records.push({ MC: carryRows[0].MC, Datetime: startTH, MCStatus: carryRows[0].MCStatus });
+    }
+    records.push(...rows);
+
+    if (records.length === 0) {
+        return { runTimeSeconds: 0, excludedSeconds: 0, totalSeconds: Math.max(0, (endTH - startTH) / 1000) };
+    }
+
+    return calcMcStatusDurations(records, startTH, endTH);
+}
+
 module.exports = {
     // ============================================================
     // 1️⃣ GET /api/operator/picture/:emp_no
@@ -321,6 +398,10 @@ module.exports = {
                 } else if (cachedData) {
                     cycleTimeActual = cachedData.overall.avgCycleTime || 0;
                 }
+                if (cycleTimeActual <= 0) {
+                    const cycleTimeRow = await loadCycleTimeRow(machine_name, targetDate);
+                    cycleTimeActual = calcWeightedAvgCycleTime(cycleTimeRow || cachedData, actualByHour);
+                }
 
                 const modeRunTime = getMachineRunTimeMode(machine_name);
                 if (modeRunTime === "output_based") {
@@ -349,7 +430,13 @@ module.exports = {
                 } else {
                     // status_based: ใช้ memoryOeeService
                     const memoryOeeService = require("../services/memoryOeeService");
-                    const { runTimeSec, excludedSec, totalSec } = memoryOeeService.getDurationsNow(machine_name, calculationTime);
+                    let { runTimeSec, excludedSec, totalSec } = memoryOeeService.getDurationsNow(machine_name, calculationTime);
+                    if (totalSec <= 0 || (runTimeSec <= 0 && excludedSec <= 0)) {
+                        const mssqlDurations = await calcMssqlMcStatusDurations(machine_name, shiftStart, calculationTime);
+                        runTimeSec = mssqlDurations.runTimeSeconds;
+                        excludedSec = mssqlDurations.excludedSeconds;
+                        totalSec = mssqlDurations.totalSeconds;
+                    }
                     availabilityActual = calcAvailability(runTimeSec, excludedSec, totalSec);
 
                     // ✅ Fallback: ถ้า memoryOeeService คืน 0 (เพราะ Main Thread แยก RAM จาก Worker Thread)
@@ -625,18 +712,11 @@ module.exports = {
             let availabilityArray = [];
             if (isToday) {
                  availabilityArray = cacheService.getAvailability(machine_name);
+                 if (!hasPositiveValue(availabilityArray)) {
+                    availabilityArray = await loadAvailabilityArray(machine_name, targetDate);
+                 }
             } else {
-                const availRow = await prisma.tb_availability_actual.findFirst({
-                    where: { machine_name, date: targetDate },
-                });
-                if (availRow) {
-                    availabilityArray = SHIFT_HOURS.map(h => availRow[`avail_${h}`] || 0);
-                } else {
-                    const effRow = await prisma.tb_efficiency_actual.findFirst({
-                        where: { machine_name, date: targetDate },
-                    });
-                    availabilityArray = SHIFT_HOURS.map(h => effRow ? (effRow[`eff_${h}`] || 0) : 0);
-                }
+                availabilityArray = await loadAvailabilityArray(machine_name, targetDate);
             }
 
             // ✅ Fix: current hour CT → InfluxDB เป็น source of truth (ต้องอยู่นอก else เพื่อให้ทำงานทั้งกรณี cache และ MSSQL)

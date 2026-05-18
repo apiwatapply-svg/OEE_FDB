@@ -7,6 +7,16 @@ const Influx = require("influx");
 
 let influxClient = null;
 
+function deriveAhvMachineNameFromHost(host) {
+    if (!host) return null;
+    const text = String(host);
+    const match = text.match(/AHV[-_ ]?0*(\d{1,3})/i);
+    if (!match) return null;
+    const num = parseInt(match[1], 10);
+    if (!Number.isFinite(num) || num <= 0) return null;
+    return `AHV-${String(num).padStart(3, "0")}`;
+}
+
 /**
  * Initialize InfluxDB 1.x client
  */
@@ -66,7 +76,7 @@ async function queryAllMachinesForHour(startUTC, endUTC) {
                MEAN("cycle_time") AS "avg_cycle_time"
         FROM "${measurement}"
         WHERE time >= '${startISO}' AND time < '${endISO}'
-        GROUP BY "machine_name", "Model"
+        GROUP BY "machine_type", "machine_name", "host", "Model"
     `;
 
     try {
@@ -74,7 +84,11 @@ async function queryAllMachinesForHour(startUTC, endUTC) {
         const machineData = {};
 
         for (const row of results) {
-            const machineName = row.machine_name || row.tags?.machine_name;
+            const rawMachineName = row.machine_name || row.tags?.machine_name;
+            const machineType = row.machine_type || row.tags?.machine_type;
+            const host = row.host || row.tags?.host;
+            const derivedAhv = machineType === "AHV" ? deriveAhvMachineNameFromHost(host) : null;
+            const machineName = derivedAhv || rawMachineName;
             // 🔧 Fix: row.Model is a direct property when Model is a Tag (GROUP BY "Model")
             //   Empty string ("") = data written before Telegraf used Model as Tag → treat as "--"
             const rawModel = row.Model ?? row.tags?.Model;
@@ -125,11 +139,18 @@ async function queryMachineForHour(machineName, startUTC, endUTC) {
     const startISO = startUTC instanceof Date ? startUTC.toISOString() : startUTC;
     const endISO = endUTC instanceof Date ? endUTC.toISOString() : endUTC;
 
+    const ahvMatch = String(machineName || "").match(/^AHV-(\d{3})$/);
+    const hostRegex = ahvMatch ? `/.*AHV[-_ ]?0*${ahvMatch[1]}.*/` : null;
+
+    const whereClause = ahvMatch
+        ? `(("machine_name" = '${machineName}') OR ("machine_type" = 'AHV' AND "host" =~ ${hostRegex}))`
+        : `("machine_name" = '${machineName}')`;
+
     const query = `
         SELECT COUNT("cycle_time") AS "output_count",
                MEAN("cycle_time") AS "avg_cycle_time"
         FROM "${measurement}"
-        WHERE "machine_name" = '${machineName}'
+        WHERE ${whereClause}
         AND time >= '${startISO}' AND time < '${endISO}'
     `;
 
@@ -164,7 +185,7 @@ async function queryHoursRange(startUTC, endUTC) {
                MEAN("cycle_time") AS "avg_cycle_time"
         FROM "${measurement}"
         WHERE time >= '${startISO}' AND time < '${endISO}'
-        GROUP BY "machine_name", "Model", time(1h)
+        GROUP BY "machine_type", "machine_name", "host", "Model", time(1h)
     `;
 
     try {
@@ -172,7 +193,11 @@ async function queryHoursRange(startUTC, endUTC) {
         const machineHourData = {};
 
         for (const row of results) {
-            const machineName = row.machine_name || row.tags?.machine_name;
+            const rawMachineName = row.machine_name || row.tags?.machine_name;
+            const machineType = row.machine_type || row.tags?.machine_type;
+            const host = row.host || row.tags?.host;
+            const derivedAhv = machineType === "AHV" ? deriveAhvMachineNameFromHost(host) : null;
+            const machineName = derivedAhv || rawMachineName;
             // 🔧 Fix: row.Model is a direct property when Model is a Tag (GROUP BY "Model")
             //   Empty string ("") = data written before Telegraf used Model as Tag → treat as "--"
             const rawModel = row.Model ?? row.tags?.Model;

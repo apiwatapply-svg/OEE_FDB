@@ -232,7 +232,7 @@ model tb_MCAlarm {
   ID       BigInt   @id(map: "PK_tb_MCAlarm") @default(autoincrement())
   Datetime DateTime
   MC       String   @db.NVarChar(50)
-  MCAlarm String   @db.NVarChar(50)
+  MCAlarm String   @db.NVarChar(255)
   UTC_Time DateTime?
 
   @@index([Datetime])

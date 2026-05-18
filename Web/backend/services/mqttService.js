@@ -11,6 +11,40 @@ const path = require("path");
 const machineCalcConfig = JSON.parse(fs.readFileSync(path.join(__dirname, "../config/machine_calc.json"), "utf8"));
 const timezoneModes = machineCalcConfig.timezone_modes || {};
 const defaultTzMode = timezoneModes["default"] || "local";
+const MC_ALARM_MAX_LENGTH = 255;
+const LEGACY_MC_ALARM_MAX_LENGTH = 50;
+const MC_STATUS_REMARK_MAX_LENGTH = 255;
+
+function truncateDbText(value, maxLength) {
+    if (value === undefined || value === null) return null;
+    const text = String(value);
+    return text.length > maxLength ? text.slice(0, maxLength) : text;
+}
+
+function parseUtcDateTime(value) {
+    if (!value) return null;
+    const text = String(value).trim();
+    if (!text) return null;
+    const normalized = text.includes("T") ? text : text.replace(" ", "T");
+    const iso = normalized.endsWith("Z") ? normalized : `${normalized}Z`;
+    const parsed = new Date(iso);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed;
+}
+
+function deriveAhvMachineNameFromHost(host) {
+    if (!host) return null;
+    const text = String(host);
+    const match = text.match(/AHV[-_ ]?0*(\d{1,3})/i);
+    if (!match) return null;
+    const num = parseInt(match[1], 10);
+    if (!Number.isFinite(num) || num <= 0) return null;
+    return `AHV-${String(num).padStart(3, "0")}`;
+}
+
+function isDbValueTooLongError(error) {
+    return String(error?.message || "").includes("too long for the column's type");
+}
 
 const getIsUTC = (machineName) => {
     for (const key of Object.keys(timezoneModes)) {
@@ -24,6 +58,70 @@ const getIsUTC = (machineName) => {
 // 1. In-Memory Store for Machine States
 // Key: machine_name, Value: Current State (current_hour_actual, current_hour_ng, cycle_time, etc.)
 const machineStateMem = new Map();
+
+// Helper to close out the hour and push to Cache immediately
+function forceHourRolloverForMachine(machineName, currentState, currentThColumn) {
+    if (!currentState) return;
+    if (currentState.current_hour_label && currentState.current_hour_actual > 0) {
+        try {
+            const cacheService = require("./cacheService");
+            const oldHour = currentState.current_hour_label;
+            const oldOutput = currentState.current_hour_actual;
+            const oldAvgCt = currentState.current_hour_actual > 0
+                ? currentState.sum_cycle_time / currentState.current_hour_actual
+                : 0;
+            const theoreticalMax = oldAvgCt > 0 ? 3600 / oldAvgCt : 0;
+            const oldEff = theoreticalMax > 0 ? (oldOutput / theoreticalMax) * 100 : 0;
+            cacheService.updateHour(machineName, oldHour, oldOutput, oldAvgCt, oldEff);
+        } catch (e) {
+            console.error(`[MQTT] forceHourRolloverForMachine error:`, e.message);
+        }
+    }
+    currentState.current_hour_actual = 0;
+    currentState.current_hour_ng = 0;
+    currentState.current_hour_station_ng = {}; 
+    currentState.sum_cycle_time = 0;
+    currentState.current_hour_label = currentThColumn;
+}
+
+// Function to force rollover for ALL machines (called by realtimeService at xx:00:00)
+function forceHourRolloverAll(currentThColumn) {
+    let count = 0;
+    for (const [machineName, state] of machineStateMem.entries()) {
+        if (state.current_hour_label !== currentThColumn) {
+            forceHourRolloverForMachine(machineName, state, currentThColumn);
+            count++;
+        }
+    }
+    if (count > 0) {
+        console.log(`🔄 [MQTT] Forced hour rollover to ${currentThColumn} for ${count} machines`);
+    }
+}
+
+const OUTPUT_DEDUP_WINDOW_MS = Math.max(parseInt(process.env.OUTPUT_DEDUP_WINDOW_MS || "7200000", 10) || 0, 0);
+const OUTPUT_DEDUP_MAX_KEYS_PER_MACHINE = Math.max(parseInt(process.env.OUTPUT_DEDUP_MAX_KEYS_PER_MACHINE || "10000", 10) || 0, 1000);
+const outputDedupMem = new Map();
+
+function shouldDropDuplicateOutput(machineName, dateTimeKey, nowMs) {
+    if (!machineName || !dateTimeKey) return false;
+    if (OUTPUT_DEDUP_WINDOW_MS <= 0) return false;
+
+    let map = outputDedupMem.get(machineName);
+    if (!map) {
+        map = new Map();
+        outputDedupMem.set(machineName, map);
+    }
+
+    const cutoff = nowMs - OUTPUT_DEDUP_WINDOW_MS;
+    for (const [k, t] of map) {
+        if (t >= cutoff && map.size <= OUTPUT_DEDUP_MAX_KEYS_PER_MACHINE) break;
+        map.delete(k);
+    }
+
+    if (map.has(dateTimeKey)) return true;
+    map.set(dateTimeKey, nowMs);
+    return false;
+}
 
 // 2. In-Memory Store for Station Configs
 // Key: machine_name, Value: Array of stations { station_number, station_name }
@@ -84,7 +182,13 @@ const initializeMqtt = async (emitToRoomFn, broadcastFn) => {
         try {
             // Telegraf sends JSON Payload
             const data = JSON.parse(message.toString());
-            const machineName = data.tags?.machine_name;
+            const machineType = data.tags?.machine_type;
+            const host = data.tags?.host || data.tags?.hostname;
+            let machineName = data.tags?.machine_name;
+            if (machineType === "AHV") {
+                const derived = deriveAhvMachineNameFromHost(host);
+                if (derived) machineName = derived;
+            }
 
             if (!machineName) return;
 
@@ -94,10 +198,8 @@ const initializeMqtt = async (emitToRoomFn, broadcastFn) => {
             // Telegraf Starlark processor writes Date_Time_UTC from the actual .dat file
             let dataTime = now;
             if (data.fields?.Date_Time_UTC) {
-                const parsed = new Date(data.fields.Date_Time_UTC + "Z");
-                if (!isNaN(parsed.getTime())) {
-                    dataTime = parsed;
-                }
+                const parsed = parseUtcDateTime(data.fields.Date_Time_UTC);
+                if (parsed) dataTime = parsed;
             }
 
             // ✅ Fix: Reject messages older than 25 hours (stale/replay data)
@@ -220,6 +322,11 @@ const initializeMqtt = async (emitToRoomFn, broadcastFn) => {
                 } else if (measurementName === "alarm_tb") {
                     const alarmStr = data.fields?.Alarm;
                     if (alarmStr) {
+                        const alarmToSave = truncateDbText(alarmStr, MC_ALARM_MAX_LENGTH);
+                        const remarkToSave = truncateDbText(alarmStr, MC_STATUS_REMARK_MAX_LENGTH);
+                        if (String(alarmStr).length > MC_ALARM_MAX_LENGTH) {
+                            console.warn(`[MQTT] Alarm text truncated for ${machineName}: ${String(alarmStr).length} -> ${MC_ALARM_MAX_LENGTH}`);
+                        }
                                                 // 1. เขียนลง MSSQL 
                         const isUTC = getIsUTC(machineName);
                         let thaiDataTimeMs = dataTime.getTime();
@@ -233,12 +340,32 @@ const initializeMqtt = async (emitToRoomFn, broadcastFn) => {
                                 data: {
                                     Datetime: thaiDataTime,
                                     MC: machineName,
-                                    MCAlarm: alarmStr,
+                                    MCAlarm: alarmToSave,
                                     UTC_Time: dataTime // 🆕 เก็บเวลา UTC เดิมไว้
                                 }
                             });
                         } catch (e) {
-                            console.error(`[MQTT] tb_MCAlarm Insert Error for ${machineName}:`, e.message);
+                            let savedWithLegacyFallback = false;
+                            if (isDbValueTooLongError(e) && String(alarmToSave).length > LEGACY_MC_ALARM_MAX_LENGTH) {
+                                try {
+                                    await prisma.tb_MCAlarm.create({
+                                        data: {
+                                            Datetime: thaiDataTime,
+                                            MC: machineName,
+                                            MCAlarm: truncateDbText(alarmToSave, LEGACY_MC_ALARM_MAX_LENGTH),
+                                            UTC_Time: dataTime
+                                        }
+                                    });
+                                    console.warn(`[MQTT] tb_MCAlarm.MCAlarm still appears to be NVARCHAR(${LEGACY_MC_ALARM_MAX_LENGTH}); saved legacy truncated alarm for ${machineName}. Expand the MSSQL column to NVARCHAR(${MC_ALARM_MAX_LENGTH}) to store full text.`);
+                                    savedWithLegacyFallback = true;
+                                } catch (retryError) {
+                                    console.error(`[MQTT] tb_MCAlarm Insert Retry Error for ${machineName}:`, retryError.message);
+                                    savedWithLegacyFallback = true;
+                                }
+                            }
+                            if (!savedWithLegacyFallback) {
+                                console.error(`[MQTT] tb_MCAlarm Insert Error for ${machineName}:`, e.message);
+                            }
                         }
 
                         // 🆕 Update recent MC_Alarm status with this remark
@@ -259,7 +386,7 @@ const initializeMqtt = async (emitToRoomFn, broadcastFn) => {
                             if (recentStatus) {
                                 await prisma.tb_MCStatus.update({
                                     where: { ID: recentStatus.ID },
-                                    data: { Remark: alarmStr }
+                                    data: { Remark: remarkToSave }
                                 });
                             }
                         } catch (e) {
@@ -318,30 +445,18 @@ const initializeMqtt = async (emitToRoomFn, broadcastFn) => {
 
             // If hour changed, flush old hour to cache THEN reset the accumulator
             if (currentState.current_hour_label !== currentThColumn) {
-                // Save old hour data to cache (if there was data)
-                if (currentState.current_hour_label && currentState.current_hour_actual > 0) {
-                    try {
-                        const cacheService = require("./cacheService");
-                        const oldHour = currentState.current_hour_label;
-                        const oldOutput = currentState.current_hour_actual;
-                        const oldAvgCt = currentState.current_hour_actual > 0
-                            ? currentState.sum_cycle_time / currentState.current_hour_actual
-                            : 0;
-                        const theoreticalMax = oldAvgCt > 0 ? 3600 / oldAvgCt : 0;
-                        const oldEff = theoreticalMax > 0 ? (oldOutput / theoreticalMax) * 100 : 0;
-                        cacheService.updateHour(machineName, oldHour, oldOutput, oldAvgCt, oldEff);
-                    } catch (e) {
-                        // Non-critical — summarizeLastHour will also write this data
-                    }
-                }
-                currentState.current_hour_actual = 0;
-                currentState.current_hour_ng = 0;
-                currentState.current_hour_station_ng = {}; // 🆕 Reset station NG
-                currentState.sum_cycle_time = 0;
-                currentState.current_hour_label = currentThColumn;
+                forceHourRolloverForMachine(machineName, currentState, currentThColumn);
             }
 
             // Aggregate data (1 message = 1 part)
+            if (machineType === "AHV") {
+                const raw = data.fields?.Date_Time_UTC;
+                const dtKey = raw != null ? String(raw).trim() : "";
+                if (dtKey && shouldDropDuplicateOutput(machineName, dtKey, now.getTime())) {
+                    return;
+                }
+            }
+
             currentState.current_hour_actual += 1;
             if (isNg) {
                 currentState.current_hour_ng += 1;
@@ -573,5 +688,6 @@ module.exports = {
     restoreMachineStateMem,
     hydrateMqttMemoryFromInflux,
     scheduleResync,
-    updateStateFromMssqlPoller
+    updateStateFromMssqlPoller,
+    forceHourRolloverAll
 };

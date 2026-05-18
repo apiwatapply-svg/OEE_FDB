@@ -1,47 +1,44 @@
 'use client';
 
+import { Component, type ReactNode, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import ReportDashboard from '../components/ReportDashboard';
+
+class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+    state = { error: null as Error | null };
+
+    static getDerivedStateFromError(error: Error) {
+        return { error };
+    }
+
+    render() {
+        if (this.state.error) {
+            return (
+                <div style={{ padding: 16, color: '#b91c1c' }}>
+                    <div style={{ fontWeight: 700 }}>Application error</div>
+                    <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace' }}>
+                        {this.state.error.message}
+                        {this.state.error.stack ? `\n\n${this.state.error.stack}` : ''}
+                    </div>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 function DailyReportContent() {
     const searchParams = useSearchParams();
-    const machineName = searchParams.get('machine') || 'Unknown';
-
-    return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '60vh',
-            padding: '20px',
-        }}>
-            <div style={{
-                backgroundColor: '#fff',
-                borderRadius: '8px',
-                padding: '40px 60px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                textAlign: 'center',
-            }}>
-                <i className="fas fa-calendar-day" style={{ fontSize: '48px', color: '#007bff', marginBottom: '20px' }}></i>
-                <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>
-                    Daily Report
-                </h1>
-                <h2 style={{ fontSize: '24px', color: '#007bff', marginBottom: '20px' }}>
-                    {machineName}
-                </h2>
-                <p style={{ color: '#666', fontSize: '14px' }}>
-                    (Coming Soon)
-                </p>
-            </div>
-        </div>
-    );
+    const machineName = searchParams.get('machine') || '';
+    return <ReportDashboard mode="daily" initialMachine={machineName} />;
 }
 
 export default function DailyReportPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <DailyReportContent />
+            <PageErrorBoundary>
+                <DailyReportContent />
+            </PageErrorBoundary>
         </Suspense>
     );
 }

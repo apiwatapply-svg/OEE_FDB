@@ -100,6 +100,7 @@ const modelController = require("./controllers/ModelController");
 const outputTargetController = require("./controllers/OutputTargetController");
 const historyWorkingController = require("./controllers/HistoryWorkingController");
 const machineController = require("./controllers/MachineController");
+const reportDashboardController = require("./controllers/ReportDashboardController");
 const reportController = require("./controllers/ReportController"); // 🆕
 const machineNgController = require("./controllers/MachineNgController"); // 🆕
 const mcStatusController = require("./controllers/MCStatusController"); // 🆕 Machine Status
@@ -183,6 +184,8 @@ app.get("/api/machine/listAllMachinesByArea", machineController.listAllMachinesB
 app.get("/api/machine/getMachinesWithTodayData", machineController.getMachinesWithTodayData); // 🆕 Layout Dashboard Cards
 
 // ... REPORT ROUTES
+app.get("/api/report/daily-dashboard", apiCache(60), reportDashboardController.getDailyDashboard);
+app.get("/api/report/monthly-dashboard", apiCache(60), reportDashboardController.getMonthlyDashboard);
 app.get("/api/report/machine-report", reportController.getMachineReport); // 🆕 // ✅ Add Route
 app.get("/api/report/machine-ng-report", machineNgController.getMachineNgReport); // 🆕 Machine NG Report Route
 
