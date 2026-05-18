@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -25,6 +26,9 @@ function OverallMachineContent() {
     const area = searchParams.get("area");
     const type = searchParams.get("type");
     const date = searchParams.get("date");
+    const targetMachine = searchParams.get("machine");
+    const viewParam = searchParams.get("view");
+    const queryView = viewParam === "status" || viewParam === "output" ? viewParam : null;
 
     // ─── Machine list & filter ───────────────────
     const [machines, setMachines] = useState<any[]>([]);
@@ -57,6 +61,7 @@ function OverallMachineContent() {
     const [realtimeData, setRealtimeData] = useState<any>(null);
 
     const [activeView, setActiveViewState] = useState<"output" | "status">(() => {
+        if (viewParam === "output" || viewParam === "status") return viewParam;
         if (typeof window !== "undefined") {
             const saved = localStorage.getItem("overallMachineActiveView");
             if (saved === "output" || saved === "status") return saved;
@@ -74,6 +79,12 @@ function OverallMachineContent() {
             localStorage.removeItem("overallMachineActiveView");
         };
     }, []);
+
+    useEffect(() => {
+        if (!queryView) return;
+        setActiveViewState(queryView);
+        localStorage.setItem("overallMachineActiveView", queryView);
+    }, [queryView]);
 
     // ─── MC Status countdown ─────────────────────
     const [countdown, setCountdown] = useState(300);
@@ -166,6 +177,14 @@ function OverallMachineContent() {
     // ─── Load saved filter from localStorage after machines loaded ──
     useEffect(() => {
         if (machines.length === 0 || !area || !type) return;
+        if (targetMachine) {
+            const found = machines.find((m: any) => m.machine_name === targetMachine);
+            if (found?.id != null) {
+                setSelectedMachineIds(new Set([found.id]));
+                setCurrentPage(1);
+                return;
+            }
+        }
         const saved = localStorage.getItem(filterKey(area, type));
         if (saved) {
             try {
@@ -178,7 +197,7 @@ function OverallMachineContent() {
             // Default: all machines selected
             setSelectedMachineIds(new Set(machines.map((m: any) => m.id)));
         }
-    }, [machines, area, type]);
+    }, [machines, area, type, targetMachine]);
 
     // ─── Socket: realtime_output ─────────────────
     useEffect(() => {

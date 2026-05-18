@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import config from '@/app/config';
 import { getSocket } from '@/app/lib/socketManager';
+import { fetchMachineStatusConfig, StatusDefinition } from '@/app/lib/machineStatusConfig';
 
 const apiServer = config.apiServer;
 
@@ -149,6 +150,34 @@ interface MachineData {
     performance?: number;
 }
 
+interface StatusVisual {
+    bodyColor: string;
+    borderColor: string;
+    headerColor: string;
+}
+
+const hexToRgba = (hex: string, alpha: number) => {
+    const clean = hex.replace('#', '');
+    if (clean.length !== 6) return hex;
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const getDefaultStatusVisual = (status?: string): StatusVisual => {
+    if (status === 'Plan_Stop' || status === 'Break_Time') {
+        return { bodyColor: '#d5d5d5', borderColor: '#424242', headerColor: '#424242' };
+    }
+    if (status === 'Run_Time') {
+        return { bodyColor: '#e8f5e9', borderColor: '#2e7d32', headerColor: '#2e7d32' };
+    }
+    if (status) {
+        return { bodyColor: '#ffebee', borderColor: '#c62828', headerColor: '#c62828' };
+    }
+    return { bodyColor: '#f5f5f5', borderColor: '#9e9e9e', headerColor: '#bdbdbd' };
+};
+
 export default function LayoutDashboard() {
     const router = useRouter();
     const [activeButton, setActiveButton] = useState<string>('OUTPUT');
@@ -160,6 +189,7 @@ export default function LayoutDashboard() {
     const [serverTimeStr, setServerTimeStr] = useState('');
     const [machineStatuses, setMachineStatuses] = useState<Record<string, string>>({});
     const [machineAlarms, setMachineAlarms] = useState<Record<string, string>>({});
+    const [statusConfigByType, setStatusConfigByType] = useState<Record<string, Record<string, StatusDefinition>>>({});
     const [countdown, setCountdown] = useState<number>(300); // 5 minutes refresh
 
     useEffect(() => {
@@ -167,6 +197,33 @@ export default function LayoutDashboard() {
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    useEffect(() => {
+        let alive = true;
+        fetchMachineStatusConfig().then((sysConfig) => {
+            if (!alive || !sysConfig) return;
+
+            const buildMap = (statuses: StatusDefinition[] = []) => {
+                const map: Record<string, StatusDefinition> = {};
+                for (const status of statuses) map[status.key] = status;
+                return map;
+            };
+
+            const next: Record<string, Record<string, StatusDefinition>> = {
+                default: buildMap(sysConfig.default?.statuses || []),
+            };
+
+            for (const [type, typeConfig] of Object.entries(sysConfig.machineTypes || {})) {
+                next[type] = buildMap((typeConfig as { statuses?: StatusDefinition[] }).statuses || []);
+            }
+
+            setStatusConfigByType(next);
+        });
+
+        return () => {
+            alive = false;
+        };
     }, []);
 
     // ฟังก์ชันดึงข้อมูลเครื่องจักร
@@ -339,6 +396,17 @@ export default function LayoutDashboard() {
 
     // Machine Card Component - แสดงในช่อง grid ขนาดเล็ก
     const MachineCard = ({ machine }: { machine: MachineData }) => {
+        const status = machineStatuses[machine.name];
+        const statusMap = statusConfigByType[machine.type] || statusConfigByType.default || {};
+        const statusInfo = status ? statusMap[status] : undefined;
+        const statusVisual = statusInfo
+            ? {
+                bodyColor: hexToRgba(statusInfo.color, statusInfo.group === 'running' ? 0.12 : 0.16),
+                borderColor: statusInfo.color,
+                headerColor: statusInfo.color,
+            }
+            : getDefaultStatusVisual(status);
+
         const getValue = () => {
             switch (activeButton) {
                 case 'OUTPUT': return machine.output !== '--' ? `${machine.output} pcs` : '--';
@@ -357,20 +425,8 @@ export default function LayoutDashboard() {
                     setShowPopup(true);
                 }}
                 style={{
-                    backgroundColor: (() => {
-                        const status = machineStatuses[machine.name];
-                        if (status === 'Plan_Stop' || status === 'Break_Time') return '#d5d5d5'; // เทาเข้ม (body)
-                        if (status === 'Run_Time') return '#e8f5e9'; // Light Green
-                        if (status) return '#ffebee'; // Down Time (Light Red)
-                        return '#f5f5f5'; // No Data — เทาอ่อน (body)
-                    })(),
-                    border: `1px solid ${(() => {
-                        const status = machineStatuses[machine.name];
-                        if (status === 'Plan_Stop' || status === 'Break_Time') return '#424242'; // เทาเข้ม (border)
-                        if (status === 'Run_Time') return '#2e7d32'; // Dark Green
-                        if (status) return '#c62828'; // Down Time (Dark Red)
-                        return '#9e9e9e'; // No Data — เทาอ่อน (border)
-                    })()}`,
+                    backgroundColor: statusVisual.bodyColor,
+                    border: `1px solid ${statusVisual.borderColor}`,
                     borderRadius: '4px',
                     cursor: 'pointer',
                     width: '100%',
@@ -399,13 +455,7 @@ export default function LayoutDashboard() {
                 {/* Machine Name - Header */}
                 <div style={{
                     fontWeight: 'bold',
-                    backgroundColor: (() => {
-                        const status = machineStatuses[machine.name];
-                        if (status === 'Plan_Stop' || status === 'Break_Time') return '#424242'; // เทาเข้ม (header)
-                        if (status === 'Run_Time') return '#2e7d32';
-                        if (status) return '#c62828';
-                        return '#bdbdbd'; // No Data — เทาอ่อน (header)
-                    })(),
+                    backgroundColor: statusVisual.headerColor,
                     color: '#ffffff',
                     padding: '1px 2px',
                     whiteSpace: 'nowrap',

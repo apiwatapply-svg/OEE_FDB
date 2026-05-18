@@ -1,9 +1,12 @@
 const dayjs = require("dayjs");
 const { PrismaClient } = require("@prisma/client");
+const fs = require("fs");
+const path = require("path");
 const { sumHourlyFields } = require("./oeeCalcService");
 const { groupActualRowsByMachineAndDate, sumActualTotal } = require("./actualOutputService");
 
 const prisma = new PrismaClient();
+const TH_OFFSET_MS = 7 * 60 * 60 * 1000;
 
 const SHIFT_HOURS = [
     "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18",
@@ -14,13 +17,60 @@ const SHIFT_A_HOURS = ["07", "08", "09", "10", "11", "12", "13", "14"];
 const SHIFT_B_HOURS = ["15", "16", "17", "18", "19", "20", "21", "22"];
 const SHIFT_C_HOURS = ["23", "00", "01", "02", "03", "04", "05", "06"];
 
-const DOWNTIME_CATEGORIES = {
-    alarm: new Set(["MC_Alarm", "MC_Error"]),
-    maintenance: new Set(["MM_Repair", "MM_Preventive", "MM_Check_Master", "Wait_MM"]),
-    adjust: new Set(["Setter_Adjust", "Setter_Check_Master", "Setter_Preventive", "Prod_Check_Master", "QC_Check_Master", "Check_Master", "Prod_Cleaning"]),
-};
-
 const RUNTIME_STATUS = "Run_Time";
+const STATUS_CONFIG_PATH = path.join(__dirname, "../config/machine_status.json");
+let cachedStatusConfig = null;
+
+function loadStatusConfig() {
+    if (cachedStatusConfig) return cachedStatusConfig;
+    cachedStatusConfig = JSON.parse(fs.readFileSync(STATUS_CONFIG_PATH, "utf8"));
+    return cachedStatusConfig;
+}
+
+function getTypeStatusConfig(machineType, config = loadStatusConfig()) {
+    return config.machineTypes?.[machineType] || config.default || { statuses: [], reportGroups: [] };
+}
+
+function getReportGroupsForMachines(machines, config = loadStatusConfig()) {
+    const merged = new Map();
+    const machineTypes = [...new Set(machines.map((machine) => machine.machine_type).filter(Boolean))];
+    const typeConfigs = machineTypes.length
+        ? machineTypes.map((machineType) => getTypeStatusConfig(machineType, config))
+        : [config.default];
+
+    for (const typeConfig of typeConfigs) {
+        for (const group of typeConfig.reportGroups || []) {
+            if (!merged.has(group.key)) merged.set(group.key, group);
+        }
+    }
+
+    return [...merged.values()];
+}
+
+function buildStatusResolverByMachine(machines, config = loadStatusConfig()) {
+    const resolver = new Map();
+    for (const machine of machines) {
+        const typeConfig = getTypeStatusConfig(machine.machine_type, config);
+        const statuses = new Map((typeConfig.statuses || []).map((status) => [status.key, status]));
+        resolver.set(machine.machine_name, { typeConfig, statuses });
+    }
+    return resolver;
+}
+
+function resolveStatusReportInfo(row, resolverByMachine) {
+    const machineResolver = resolverByMachine.get(row.MC);
+    const statusDef = machineResolver?.statuses?.get(row.MCStatus);
+
+    if (statusDef?.reportGroup) return statusDef.reportGroup;
+    if (statusDef?.group === "running" || row.MCStatus === RUNTIME_STATUS) return "runtime";
+    if (statusDef?.group === "excluded") return "excluded";
+    if (statusDef?.group === "offline") return "offline";
+    return null;
+}
+
+function createEmptyDowntime(reportGroups, fillValue = 0) {
+    return Object.fromEntries(reportGroups.map((group) => [group.key, fillValue]));
+}
 
 function normalizeDateKey(date) {
     return dayjs(date).format("YYYY-MM-DD");
@@ -30,12 +80,22 @@ function monthKey(date) {
     return dayjs(date).format("YYYY-MM");
 }
 
+function getDbLocalNow(now = new Date()) {
+    return new Date(new Date(now).getTime() + TH_OFFSET_MS);
+}
+
+function getCurrentShiftDateKey(now = new Date()) {
+    const dbNow = getDbLocalNow(now);
+    if (dbNow.getUTCHours() < 7) dbNow.setUTCDate(dbNow.getUTCDate() - 1);
+    return dbNow.toISOString().slice(0, 10);
+}
+
 function isFutureDay(bucketKey, today = new Date()) {
-    return dayjs(bucketKey).startOf("day").isAfter(dayjs(today).startOf("day"));
+    return bucketKey > getCurrentShiftDateKey(today);
 }
 
 function isFutureMonth(bucketKey, today = new Date()) {
-    return dayjs(`${bucketKey}-01`).startOf("month").isAfter(dayjs(today).startOf("month"));
+    return bucketKey > getCurrentShiftDateKey(today).slice(0, 7);
 }
 
 function effectiveMonthDays(bucketKey, today = new Date()) {
@@ -59,13 +119,6 @@ function avgValues(rows, field) {
     const values = rows.map((row) => Number(row[field] || 0)).filter((value) => value > 0);
     if (values.length === 0) return 0;
     return values.reduce((total, value) => total + value, 0) / values.length;
-}
-
-function resolveStatusCategory(status) {
-    if (DOWNTIME_CATEGORIES.alarm.has(status)) return "alarm";
-    if (DOWNTIME_CATEGORIES.maintenance.has(status)) return "maintenance";
-    if (DOWNTIME_CATEGORIES.adjust.has(status)) return "adjust";
-    return null;
 }
 
 function createMachineFilter({ area, type, machine }) {
@@ -105,7 +158,7 @@ async function getStatusRows(machineNames, startTime, endTime) {
         prisma.tb_MCStatus.findFirst({
             where: { MC: machineName, Datetime: { lt: startTime } },
             orderBy: { Datetime: "desc" },
-            select: { MC: true, MCStatus: true, Datetime: true, Remark: true },
+            select: { ID: true, MC: true, MCStatus: true, Datetime: true, Remark: true },
         })
     )));
 
@@ -114,11 +167,11 @@ async function getStatusRows(machineNames, startTime, endTime) {
             MC: { in: machineNames },
             Datetime: { gte: startTime, lt: endTime },
         },
-        orderBy: [{ MC: "asc" }, { Datetime: "asc" }],
-        select: { MC: true, MCStatus: true, Datetime: true, Remark: true },
+        orderBy: [{ MC: "asc" }, { Datetime: "asc" }, { ID: "asc" }],
+        select: { ID: true, MC: true, MCStatus: true, Datetime: true, Remark: true },
     });
 
-    return [...carryRows.filter(Boolean).map((row) => ({ ...row, Datetime: startTime })), ...rows];
+    return [...carryRows.filter(Boolean).map((row) => ({ ...row, Datetime: startTime, __isCarry: true })), ...rows];
 }
 
 function buildTimeBuckets(start, count, unit) {
@@ -134,20 +187,60 @@ function buildTimeBuckets(start, count, unit) {
     });
 }
 
-function addDurationToBuckets(bucketMap, start, end, status) {
-    const category = resolveStatusCategory(status);
-    const isRuntime = status === RUNTIME_STATUS;
-    if ((!category && !isRuntime) || end <= start) return;
+function buildShiftTimeBuckets(start, count, unit, today = new Date()) {
+    const currentShiftKey = getCurrentShiftDateKey(today);
+    const currentShiftMonth = currentShiftKey.slice(0, 7);
+    const dbNow = getDbLocalNow(today);
+
+    return Array.from({ length: count }, (_, index) => {
+        const bucketStartKey = unit === "day"
+            ? dayjs(start).add(index, "day").format("YYYY-MM-DD")
+            : dayjs(start).add(index, "month").format("YYYY-MM");
+        const bucketEndKey = unit === "day"
+            ? dayjs(start).add(index + 1, "day").format("YYYY-MM-DD")
+            : dayjs(start).add(index + 1, "month").format("YYYY-MM");
+        const [startYear, startMonth, startDay = 1] = bucketStartKey.split("-").map(Number);
+        const [endYear, endMonth, endDay = 1] = bucketEndKey.split("-").map(Number);
+        const bucketStart = new Date(Date.UTC(startYear, startMonth - 1, startDay, 7, 0, 0));
+        const bucketEnd = new Date(Date.UTC(endYear, endMonth - 1, endDay, 7, 0, 0));
+
+        let effectiveEnd = bucketEnd;
+        if (unit === "day") {
+            if (bucketStartKey > currentShiftKey) effectiveEnd = bucketStart;
+            else if (bucketStartKey === currentShiftKey) effectiveEnd = new Date(Math.min(bucketEnd.getTime(), dbNow.getTime()));
+        } else {
+            if (bucketStartKey > currentShiftMonth) effectiveEnd = bucketStart;
+            else if (bucketStartKey === currentShiftMonth) effectiveEnd = new Date(Math.min(bucketEnd.getTime(), dbNow.getTime()));
+        }
+
+        return {
+            key: bucketStartKey,
+            label: unit === "day" ? String(Number(bucketStartKey.slice(8, 10))) : dayjs(`${bucketStartKey}-01`).format("MMM"),
+            start: bucketStart,
+            end: bucketEnd,
+            effectiveEnd,
+        };
+    });
+}
+
+function getBucketBaseMinutes(bucket) {
+    const bucketEnd = bucket.effectiveEnd || bucket.end;
+    return Math.max(0, (bucketEnd.getTime() - bucket.start.getTime()) / 60000);
+}
+
+function addDurationToBuckets(bucketMap, start, end, reportGroup) {
+    if ((!reportGroup || reportGroup === "excluded" || reportGroup === "offline") || end <= start) return;
 
     for (const bucket of bucketMap.values()) {
         const overlapStart = Math.max(start.getTime(), bucket.start.getTime());
-        const overlapEnd = Math.min(end.getTime(), bucket.end.getTime());
+        const bucketEnd = bucket.effectiveEnd || bucket.end;
+        const overlapEnd = Math.min(end.getTime(), bucketEnd.getTime());
         if (overlapEnd > overlapStart) {
             const minutes = (overlapEnd - overlapStart) / 60000;
-            if (isRuntime) {
+            if (reportGroup === "runtime") {
                 bucket.runtimeMinutes += minutes;
-            } else {
-                bucket.downtime[category] += minutes;
+            } else if (Object.prototype.hasOwnProperty.call(bucket.downtime, reportGroup)) {
+                bucket.downtime[reportGroup] += minutes;
             }
         }
     }
@@ -160,11 +253,30 @@ function findBucketForTime(buckets, time) {
     return null;
 }
 
-function aggregateDowntime(statusRows, buckets) {
+function compareStatusRows(a, b) {
+    const timeDiff = new Date(a.Datetime).getTime() - new Date(b.Datetime).getTime();
+    if (timeDiff !== 0) return timeDiff;
+    const aId = a.ID == null ? 0n : BigInt(a.ID);
+    const bId = b.ID == null ? 0n : BigInt(b.ID);
+    if (aId === bId) return 0;
+    return aId < bId ? -1 : 1;
+}
+
+function isSameStatusContinuation(current, previous, includeRemark = false) {
+    if (current.__isCarry) return true;
+    if (!previous) return false;
+    if (previous.MC !== current.MC) return false;
+    if (previous.MCStatus !== current.MCStatus) return false;
+    if (!includeRemark) return true;
+    return String(previous.Remark || "").trim() === String(current.Remark || "").trim();
+}
+
+function aggregateDowntime(statusRows, buckets, reportGroups, resolverByMachine) {
+    const reportGroupKeys = new Set(reportGroups.map((group) => group.key));
     const bucketMap = new Map(buckets.map((bucket) => [bucket.key, {
         ...bucket,
-        downtime: { alarm: 0, maintenance: 0, adjust: 0 },
-        downtimeCounts: { alarm: 0, maintenance: 0, adjust: 0 },
+        downtime: createEmptyDowntime(reportGroups),
+        downtimeCounts: createEmptyDowntime(reportGroups),
         runtimeMinutes: 0,
     }]));
     const rowsByMachine = new Map();
@@ -175,20 +287,21 @@ function aggregateDowntime(statusRows, buckets) {
     }
 
     for (const rows of rowsByMachine.values()) {
-        rows.sort((a, b) => new Date(a.Datetime) - new Date(b.Datetime));
+        rows.sort(compareStatusRows);
         for (let index = 0; index < rows.length; index += 1) {
             const current = rows[index];
             const next = rows[index + 1];
             const segmentStart = new Date(current.Datetime);
-            const segmentEnd = next ? new Date(next.Datetime) : buckets[buckets.length - 1].end;
-            addDurationToBuckets(bucketMap, segmentStart, segmentEnd, current.MCStatus);
+            const lastBucketEnd = buckets[buckets.length - 1].effectiveEnd || buckets[buckets.length - 1].end;
+            const segmentEnd = next ? new Date(next.Datetime) : lastBucketEnd;
+            const reportGroup = resolveStatusReportInfo(current, resolverByMachine);
+            addDurationToBuckets(bucketMap, segmentStart, segmentEnd, reportGroup);
 
-            const category = resolveStatusCategory(current.MCStatus);
-            if (category) {
+            if (reportGroup && reportGroupKeys.has(reportGroup) && !isSameStatusContinuation(current, rows[index - 1])) {
                 const bucket = findBucketForTime(buckets, segmentStart);
                 if (bucket) {
                     const agg = bucketMap.get(bucket.key);
-                    if (agg) agg.downtimeCounts[category] += 1;
+                    if (agg) agg.downtimeCounts[reportGroup] += 1;
                 }
             }
         }
@@ -197,7 +310,7 @@ function aggregateDowntime(statusRows, buckets) {
     return bucketMap;
 }
 
-function summarizeAlarmDowntimeFromStatus(statusRows, startTime, endTime, limit = 8) {
+function summarizeAlarmDowntimeFromStatus(statusRows, startTime, endTime, resolverByMachine, limit = 8) {
     const rowsByMachine = new Map();
     for (const row of statusRows) {
         if (!rowsByMachine.has(row.MC)) rowsByMachine.set(row.MC, []);
@@ -213,23 +326,52 @@ function summarizeAlarmDowntimeFromStatus(statusRows, startTime, endTime, limit 
     };
 
     for (const rows of rowsByMachine.values()) {
-        rows.sort((a, b) => new Date(a.Datetime) - new Date(b.Datetime));
-        for (let index = 0; index < rows.length; index += 1) {
-            const current = rows[index];
-            const next = rows[index + 1];
-            const segmentStart = new Date(current.Datetime);
-            const segmentEndRaw = next ? new Date(next.Datetime) : endTime;
+        rows.sort(compareStatusRows);
+        const groups = [];
+        for (const row of rows) {
+            const timeKey = new Date(row.Datetime).getTime();
+            const last = groups[groups.length - 1];
+            if (last && last.timeKey === timeKey) {
+                last.rows.push(row);
+            } else {
+                groups.push({ timeKey, rows: [row] });
+            }
+        }
 
-            if (resolveStatusCategory(current.MCStatus) !== "alarm") continue;
+        let previousActiveAlarm = null;
+        for (let index = 0; index < groups.length; index += 1) {
+            const group = groups[index];
+            const nextGroup = groups[index + 1];
+            const segmentStart = new Date(group.timeKey);
+            const segmentEndRaw = nextGroup ? new Date(nextGroup.timeKey) : endTime;
 
+            const alarmRows = group.rows.filter((row) => {
+                const reportGroup = resolveStatusReportInfo(row, resolverByMachine);
+                return reportGroup === "mc_alarm" || reportGroup === "mc_error";
+            });
+            const hasBlockingStatus = group.rows.some((row) => {
+                const reportGroup = resolveStatusReportInfo(row, resolverByMachine);
+                return reportGroup !== "mc_alarm" && reportGroup !== "mc_error";
+            });
+
+            if (alarmRows.length === 0 || hasBlockingStatus) {
+                previousActiveAlarm = null;
+                continue;
+            }
+
+            const current = alarmRows[alarmRows.length - 1];
             const overlapStart = new Date(Math.max(segmentStart.getTime(), startTime.getTime()));
             const overlapEnd = new Date(Math.min(segmentEndRaw.getTime(), endTime.getTime()));
-            if (overlapEnd <= overlapStart) continue;
+            if (overlapEnd <= overlapStart) {
+                previousActiveAlarm = current;
+                continue;
+            }
 
             const minutes = (overlapEnd.getTime() - overlapStart.getTime()) / 60000;
-            const alarmKey = current.Remark ? String(current.Remark) : "Other";
-            const countInc = (segmentStart >= startTime && segmentStart < endTime) ? 1 : 0;
+            const alarmKey = current.Remark ? String(current.Remark).trim() : "Other";
+            const countInc = (segmentStart >= startTime && segmentStart < endTime && !isSameStatusContinuation(current, previousActiveAlarm, true)) ? 1 : 0;
             add(alarmKey, minutes, countInc);
+            previousActiveAlarm = current;
         }
     }
 
@@ -240,10 +382,23 @@ function summarizeAlarmDowntimeFromStatus(statusRows, startTime, endTime, limit 
         minutes: Number(row.minutes.toFixed(2)),
     }));
 
-    const other = rows.find((row) => row.alarm === "Other");
-    const withoutOther = rows.filter((row) => row.alarm !== "Other");
-    const top = withoutOther.slice(0, other ? limit - 1 : limit);
-    const merged = other ? [...top, other] : top;
+    const top = rows.slice(0, limit - 1).map((row) => ({ ...row }));
+    const rest = rows.slice(limit - 1);
+    const otherTotal = rest.reduce((total, row) => ({
+        alarm: "Other",
+        count: total.count + row.count,
+        minutes: total.minutes + row.minutes,
+    }), { alarm: "Other", count: 0, minutes: 0 });
+    if (otherTotal.minutes > 0 || otherTotal.count > 0) {
+        const existingOther = top.find((row) => row.alarm === "Other");
+        if (existingOther) {
+            existingOther.count += otherTotal.count;
+            existingOther.minutes += otherTotal.minutes;
+        } else {
+            top.push(otherTotal);
+        }
+    }
+    const merged = top.sort((a, b) => b.minutes - a.minutes);
     return merged.map((row) => ({
         alarm: row.alarm,
         count: row.count,
@@ -442,14 +597,19 @@ async function getDailyDashboard({ month, area = "all", type = "all", machine = 
     const today = new Date();
     const machines = await getMachines({ area, type, machine });
     const machineNames = machines.map((item) => item.machine_name);
-    if (machineNames.length === 0) return { filters: { month, area, type, machine, model }, machines: [], days: [], alarmSummary: [] };
+    const statusConfig = loadStatusConfig();
+    const reportGroups = getReportGroupsForMachines(machines, statusConfig);
+    if (machineNames.length === 0) return { filters: { month, area, type, machine, model }, machines: [], modelNames: [], days: [], alarmSummary: [], statusReportGroups: reportGroups };
 
     const [targets, actualsRaw, cycles, avails, effs, oees] = await getReportRows(machineNames, monthStart.toDate(), monthEnd.toDate());
     const actuals = model && model !== "all" ? actualsRaw.filter((row) => row.model_name === model) : actualsRaw;
-    const buckets = buildTimeBuckets(monthStart, monthEnd.date(), "day");
-    const statusRows = await getStatusRows(machineNames, monthStart.toDate(), monthEnd.add(1, "day").toDate());
-    const downtimeMap = aggregateDowntime(statusRows, buckets);
-    const alarmSummary = summarizeAlarmDowntimeFromStatus(statusRows, monthStart.toDate(), monthEnd.add(1, "day").toDate());
+    const buckets = buildShiftTimeBuckets(monthStart, monthEnd.date(), "day", today);
+    const resolverByMachine = buildStatusResolverByMachine(machines, statusConfig);
+    const statusStart = buckets[0].start;
+    const statusEnd = buckets[buckets.length - 1].end;
+    const statusRows = await getStatusRows(machineNames, statusStart, statusEnd);
+    const downtimeMap = aggregateDowntime(statusRows, buckets, reportGroups, resolverByMachine);
+    const alarmSummary = summarizeAlarmDowntimeFromStatus(statusRows, statusStart, statusEnd, resolverByMachine);
 
     const rawDays = aggregateDailyRows({ buckets, targets, actuals, cycles, avails, effs, oees }).map((day) => {
         const downtimeAgg = downtimeMap.get(day.key);
@@ -465,9 +625,10 @@ async function getDailyDashboard({ month, area = "all", type = "all", machine = 
             performance: isFuture ? null : day.performance,
             quality: isFuture ? null : day.quality,
             oee: isFuture ? null : day.oee,
-            downtime: isFuture ? { alarm: null, maintenance: null, adjust: null } : (downtimeAgg?.downtime || { alarm: 0, maintenance: 0, adjust: 0 }),
-            downtimeCounts: isFuture ? { alarm: null, maintenance: null, adjust: null } : (downtimeAgg?.downtimeCounts || { alarm: 0, maintenance: 0, adjust: 0 }),
+            downtime: isFuture ? createEmptyDowntime(reportGroups, null) : (downtimeAgg?.downtime || createEmptyDowntime(reportGroups)),
+            downtimeCounts: isFuture ? createEmptyDowntime(reportGroups, null) : (downtimeAgg?.downtimeCounts || createEmptyDowntime(reportGroups)),
             runtimeMinutes: isFuture ? null : (downtimeAgg?.runtimeMinutes || 0),
+            statusBaseMinutes: isFuture ? null : getBucketBaseMinutes(downtimeAgg || day),
         };
     });
 
@@ -493,6 +654,7 @@ async function getDailyDashboard({ month, area = "all", type = "all", machine = 
         modelNames: getDistinctValues(actualsRaw, "model_name"),
         days,
         alarmSummary,
+        statusReportGroups: reportGroups,
     };
 }
 
@@ -502,21 +664,25 @@ async function getMonthlyDashboard({ year, area = "all", type = "all", machine =
     const today = new Date();
     const machines = await getMachines({ area, type, machine });
     const machineNames = machines.map((item) => item.machine_name);
-    if (machineNames.length === 0) return { filters: { year, area, type, machine, model }, machines: [], months: [], alarmSummary: [] };
+    const statusConfig = loadStatusConfig();
+    const reportGroups = getReportGroupsForMachines(machines, statusConfig);
+    if (machineNames.length === 0) return { filters: { year, area, type, machine, model }, machines: [], modelNames: [], months: [], alarmSummary: [], statusReportGroups: reportGroups };
 
     const [targets, actualsRaw, cycles, avails, effs, oees] = await getReportRows(machineNames, fiscalStart.toDate(), fiscalEnd.toDate());
     const actuals = model && model !== "all" ? actualsRaw.filter((row) => row.model_name === model) : actualsRaw;
-    const buckets = buildTimeBuckets(fiscalStart, 12, "month");
-    const statusRows = await getStatusRows(machineNames, fiscalStart.toDate(), fiscalEnd.add(1, "day").toDate());
-    const downtimeMap = aggregateDowntime(statusRows, buckets);
+    const buckets = buildShiftTimeBuckets(fiscalStart, 12, "month", today);
+    const resolverByMachine = buildStatusResolverByMachine(machines, statusConfig);
+    const statusRows = await getStatusRows(machineNames, buckets[0].start, buckets[buckets.length - 1].end);
+    const downtimeMap = aggregateDowntime(statusRows, buckets, reportGroups, resolverByMachine);
     const rawMonths = aggregateMonthlyRows({ buckets, targets, actuals, cycles, avails, effs, oees }, today).map((monthRow) => {
         const downtimeAgg = downtimeMap.get(monthRow.key);
         const future = isFutureMonth(monthRow.key, today);
         return {
             ...monthRow,
-            downtime: future ? { alarm: null, maintenance: null, adjust: null } : (downtimeAgg?.downtime || { alarm: 0, maintenance: 0, adjust: 0 }),
-            downtimeCounts: future ? { alarm: null, maintenance: null, adjust: null } : (downtimeAgg?.downtimeCounts || { alarm: 0, maintenance: 0, adjust: 0 }),
+            downtime: future ? createEmptyDowntime(reportGroups, null) : (downtimeAgg?.downtime || createEmptyDowntime(reportGroups)),
+            downtimeCounts: future ? createEmptyDowntime(reportGroups, null) : (downtimeAgg?.downtimeCounts || createEmptyDowntime(reportGroups)),
             runtimeMinutes: future ? null : (downtimeAgg?.runtimeMinutes || 0),
+            statusBaseMinutes: future ? null : getBucketBaseMinutes(downtimeAgg || monthRow),
         };
     });
 
@@ -545,6 +711,7 @@ async function getMonthlyDashboard({ year, area = "all", type = "all", machine =
         modelNames: getDistinctValues(actualsRaw, "model_name"),
         months,
         alarmSummary: [],
+        statusReportGroups: reportGroups,
     };
 }
 
@@ -553,8 +720,16 @@ module.exports = {
     getMonthlyDashboard,
     __private: {
         aggregateMonthlyRows,
+        aggregateDowntime,
+        summarizeAlarmDowntimeFromStatus,
+        buildShiftTimeBuckets,
+        buildStatusResolverByMachine,
+        getReportGroupsForMachines,
+        getBucketBaseMinutes,
+        getCurrentShiftDateKey,
         effectiveMonthDays,
         isFutureMonth,
+        isFutureDay,
         perDay,
     },
 };

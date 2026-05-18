@@ -1346,7 +1346,7 @@ export default function OverallMachineCard({
                                                 x: {
                                                     grid: { display: false }, 
                                                     ticks: { 
-                                                        display: true, 
+                                                        display: !isSingleView, 
                                                         font: { size: isSingleView ? 11 : Math.max(6, Math.round(8 * scaleFactor)) }, 
                                                         maxRotation: 45, minRotation: 45 
                                                     } 

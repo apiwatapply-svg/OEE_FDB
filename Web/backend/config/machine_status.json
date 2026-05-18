@@ -1,53 +1,73 @@
 {
   "machineTypes": {
     "AHV": {
+      "reportGroups": [
+        { "key": "mc_alarm", "label": "MC Alarm", "color": "#e11d48" },
+        { "key": "mc_error", "label": "MC Error", "color": "#7c3aed" },
+        { "key": "maintenance", "label": "Maintenance", "color": "#64748b" },
+        { "key": "adjust", "label": "Adjust machine", "color": "#fbbf24" }
+      ],
       "statuses": [
-        { "key": "Run_Time",            "label": "Run Time",           "color": "#2ca02c", "group": "running"  },
-        { "key": "Plan_Stop",           "label": "Plan Stop",          "color": "#aec7e8", "group": "excluded" },
-        { "key": "Break_Time",          "label": "Break Time",         "color": "#ffbb78", "group": "excluded" },        { "key": "MM_Repair",           "label": "MM Repair",          "color": "#d62728", "group": "downtime" },
-        { "key": "MM_Check_Master",     "label": "MM Check Master",    "color": "#ff7f0e", "group": "downtime" },
-        { "key": "MM_Preventive",       "label": "MM Preventive",      "color": "#e377c2", "group": "downtime" },
-        { "key": "Setter_Adjust",       "label": "Setter Adjust",      "color": "#9467bd", "group": "downtime" },
-        { "key": "Setter_Check_Master", "label": "Setter Check Master","color": "#8c564b", "group": "downtime" },
-        { "key": "Setter_Preventive",   "label": "Setter Preventive",  "color": "#c49c94", "group": "downtime" },
-        { "key": "QC_Quality",          "label": "QC Quality",         "color": "#1f77b4", "group": "downtime" },
-        { "key": "QC_Check_Master",     "label": "QC Check Master",    "color": "#17becf", "group": "downtime" },
-        { "key": "Prod_Cleaning",       "label": "Prod Cleaning",      "color": "#bcbd22", "group": "downtime" },
-        { "key": "Prod_Check_Master",   "label": "Prod Check Master",  "color": "#98df8a", "group": "downtime" },
-        { "key": "Wait_Part",           "label": "Wait Part",          "color": "#ff9896", "group": "downtime" },
-        { "key": "MC_Stop",             "label": "Machine Stop",       "color": "#7f7f7f", "group": "downtime" },
-        { "key": "MC_Alarm",            "label": "MC Alarm",           "color": "#c62828", "group": "downtime" },
-        { "key": "Cut_Lot",             "label": "Cut Lot",            "color": "#dbdb8d", "group": "downtime" },
-        { "key": "Signal_Lost",         "label": "Signal Lost",        "color": "#2f2f2f", "group": "offline"  }
+        { "key": "Run_Time",            "label": "Run Time",            "color": "#2ca02c", "group": "running",  "reportGroup": "runtime" },
+        { "key": "Plan_Stop",           "label": "Plan Stop",           "color": "#aec7e8", "group": "excluded", "reportGroup": "excluded" },
+        { "key": "Break_Time",          "label": "Break Time",          "color": "#ffbb78", "group": "excluded", "reportGroup": "excluded" },
+        { "key": "MM_Repair",           "label": "MM Repair",           "color": "#d62728", "group": "downtime", "reportGroup": "maintenance" },
+        { "key": "MM_Check_Master",     "label": "MM Check Master",     "color": "#ff7f0e", "group": "downtime", "reportGroup": "maintenance" },
+        { "key": "MM_Preventive",       "label": "MM Preventive",       "color": "#e377c2", "group": "downtime", "reportGroup": "maintenance" },
+        { "key": "Setter_Adjust",       "label": "Setter Adjust",       "color": "#9467bd", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "Setter_Check_Master", "label": "Setter Check Master", "color": "#8c564b", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "Setter_Preventive",   "label": "Setter Preventive",   "color": "#c49c94", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "QC_Qualify",          "label": "QC Qualify",          "color": "#1f77b4", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "QC_Check_Master",     "label": "QC Check Master",     "color": "#17becf", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "Prod_Cleaning",       "label": "Prod Cleaning",       "color": "#bcbd22", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "Prod_Check_Master",   "label": "Prod Check Master",   "color": "#98df8a", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "Wait_Part",           "label": "Wait Part",           "color": "#ff9896", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "MC_Stop",             "label": "Machine Stop",        "color": "#7f7f7f", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "MC_Alarm",            "label": "MC Alarm",            "color": "#c62828", "group": "downtime", "reportGroup": "mc_alarm" },
+        { "key": "Cut_Lot",             "label": "Cut Lot",             "color": "#dbdb8d", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "Signal_Lost",         "label": "Signal Lost",         "color": "#2f2f2f", "group": "offline",  "reportGroup": "offline" }
       ]
     },
     "ABR": {
+      "reportGroups": [
+        { "key": "mc_alarm", "label": "MC Alarm", "color": "#e11d48" },
+        { "key": "mc_error", "label": "MC Error", "color": "#7c3aed" },
+        { "key": "maintenance", "label": "Maintenance", "color": "#64748b" },
+        { "key": "adjust", "label": "Adjust machine", "color": "#fbbf24" }
+      ],
       "statuses": [
-        { "key": "Run_Time",    "label": "Run Time",    "color": "#2ca02c", "group": "running"  },
-        { "key": "Plan_Stop",   "label": "Plan Stop",   "color": "#aec7e8", "group": "excluded" },
-        { "key": "MM_Preventive",  "label": "MM Preventive",  "color": "#e377c2", "group": "excluded" },
-        { "key": "Pick_NG",     "label": "Pick NG",     "color": "#e6194b", "group": "downtime" },
-        { "key": "Wait_MM",     "label": "Wait MM",     "color": "#f58231", "group": "downtime" },
-        { "key": "MM_Repair",   "label": "MM Repair",   "color": "#d62728", "group": "downtime" },
-        { "key": "MC_Error",    "label": "Machine Error",    "color": "#c62828", "group": "downtime" },
-        { "key": "Wait_Part",   "label": "Wait Part",   "color": "#ff9896", "group": "downtime" },
-        { "key": "Wait_QC",     "label": "Wait QC",     "color": "#1f77b4", "group": "downtime" },
-        { "key": "QC_Quality",     "label": "QC Time",     "color": "#17becf", "group": "downtime" },
-        { "key": "QC_Check_Master","label": "Check Master","color": "#98df8a", "group": "downtime" },
-        { "key": "Setter_Adjust",      "label": "Setter",      "color": "#9467bd", "group": "downtime" },
-        { "key": "Signal_Lost", "label": "Signal Lost", "color": "#2f2f2f", "group": "offline"  },
-        { "key": "MC_Alarm",             "label": "Machine Alarm",       "color": "#c62828", "group": "downtime" }
+        { "key": "Run_Time",         "label": "Run Time",       "color": "#2ca02c", "group": "running",  "reportGroup": "runtime" },
+        { "key": "Plan_Stop",        "label": "Plan Stop",      "color": "#aec7e8", "group": "excluded", "reportGroup": "excluded" },
+        { "key": "MM_Preventive",    "label": "MM Preventive",  "color": "#e377c2", "group": "downtime", "reportGroup": "maintenance" },
+        { "key": "Pick_NG",          "label": "Pick NG",        "color": "#e6194b", "group": "downtime", "reportGroup": "excluded" },
+        { "key": "Wait_MM",          "label": "Wait MM",        "color": "#f58231", "group": "downtime", "reportGroup": "maintenance" },
+        { "key": "MM_Repair",        "label": "MM Repair",      "color": "#d62728", "group": "downtime", "reportGroup": "maintenance" },
+        { "key": "MC_Error",         "label": "Machine Error",  "color": "#c62828", "group": "downtime", "reportGroup": "mc_error" },
+        { "key": "Wait_Part",        "label": "Wait Part",      "color": "#ff9896", "group": "downtime", "reportGroup": "excluded" },
+        { "key": "Wait_QC",          "label": "Wait QC",        "color": "#1f77b4", "group": "downtime", "reportGroup": "excluded" },
+        { "key": "QC_Quality",       "label": "QC Time",        "color": "#17becf", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "QC_Check_Master",  "label": "Check Master",   "color": "#98df8a", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "Setter_Adjust",    "label": "Setter",         "color": "#9467bd", "group": "downtime", "reportGroup": "adjust" },
+        { "key": "Signal_Lost",      "label": "Signal Lost",    "color": "#2f2f2f", "group": "offline",  "reportGroup": "offline" },
+        { "key": "MC_Alarm",         "label": "Machine Alarm",  "color": "#c62828", "group": "downtime", "reportGroup": "mc_alarm" }
       ]
     }
   },
   "default": {
+    "reportGroups": [
+      { "key": "mc_alarm", "label": "MC Alarm", "color": "#e11d48" },
+      { "key": "mc_error", "label": "MC Error", "color": "#7c3aed" },
+      { "key": "maintenance", "label": "Maintenance", "color": "#64748b" },
+      { "key": "adjust", "label": "Adjust machine", "color": "#fbbf24" }
+    ],
     "statuses": [
-      { "key": "Run_Time",   "label": "Run Time",    "color": "#2ca02c", "group": "running"  },
-      { "key": "Plan_Stop",  "label": "Plan Stop",   "color": "#aec7e8", "group": "excluded" },
-      { "key": "MM_Repair",  "label": "MM Repair",   "color": "#d62728", "group": "downtime" },
-      { "key": "MC_Stop",    "label": "Machine Stop","color": "#7f7f7f", "group": "downtime" },
-      { "key": "MC_Alarm",   "label": "MC Alarm",    "color": "#c62828", "group": "downtime" },
-      { "key": "Signal_Lost","label": "Signal Lost", "color": "#2f2f2f", "group": "offline"  }
+      { "key": "Run_Time",    "label": "Run Time",     "color": "#2ca02c", "group": "running",  "reportGroup": "runtime" },
+      { "key": "Plan_Stop",   "label": "Plan Stop",    "color": "#aec7e8", "group": "excluded", "reportGroup": "excluded" },
+      { "key": "MM_Repair",   "label": "MM Repair",    "color": "#d62728", "group": "downtime", "reportGroup": "maintenance" },
+      { "key": "MC_Stop",     "label": "Machine Stop", "color": "#7f7f7f", "group": "downtime", "reportGroup": "adjust" },
+      { "key": "MC_Alarm",    "label": "MC Alarm",     "color": "#c62828", "group": "downtime", "reportGroup": "mc_alarm" },
+      { "key": "MC_Error",    "label": "MC Error",     "color": "#991b1b", "group": "downtime", "reportGroup": "mc_error" },
+      { "key": "Signal_Lost", "label": "Signal Lost",  "color": "#2f2f2f", "group": "offline",  "reportGroup": "offline" }
     ]
   }
 }

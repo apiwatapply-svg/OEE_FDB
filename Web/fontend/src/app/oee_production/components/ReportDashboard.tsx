@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -57,17 +59,10 @@ type Bucket = {
     efficiencyTarget: number | null;
     cycleTime: number | null;
     cycleTimeTarget: number | null;
-    downtime: {
-        alarm: number | null;
-        maintenance: number | null;
-        adjust: number | null;
-    };
-    downtimeCounts?: {
-        alarm: number | null;
-        maintenance: number | null;
-        adjust: number | null;
-    };
+    downtime: Record<string, number | null>;
+    downtimeCounts?: Record<string, number | null>;
     runtimeMinutes?: number | null;
+    statusBaseMinutes?: number | null;
 };
 
 type Machine = {
@@ -83,6 +78,7 @@ type ReportResults = {
     days?: Bucket[];
     months?: Bucket[];
     alarmSummary: { alarm: string; count: number; minutes: number }[];
+    statusReportGroups?: StatusReportGroup[];
 };
 
 type OptionItem = { value: string; label: string };
@@ -97,6 +93,19 @@ type MachinesByAreaResponse = {
     }>;
 };
 
+type StatusReportGroup = {
+    key: string;
+    label: string;
+    color: string;
+};
+
+type ChartContextLike = {
+    dataset?: {
+        data?: Array<number | null | undefined>;
+    };
+    dataIndex?: number;
+};
+
 const chartColors = {
     output: '#0284c7',
     outputTarget: '#f59e0b',
@@ -105,6 +114,7 @@ const chartColors = {
     cycle: '#16a34a',
     cycleTarget: '#94a3b8',
     alarm: '#dc2626',
+    mcError: '#991b1b',
     maintenance: '#64748b',
     adjust: '#fbbf24',
     orange: '#f97316',
@@ -120,15 +130,51 @@ const panelStyle: React.CSSProperties = {
     overflow: 'hidden',
 };
 
+const panelTitleStyle: React.CSSProperties = {
+    flexShrink: 0,
+    padding: '6px 10px 0',
+    color: '#334155',
+    fontSize: '14px',
+    fontWeight: 700,
+    lineHeight: 1.2,
+};
+
 const STORAGE_KEYS = {
     mode: 'oeeReportDashboard.mode',
     dailyPeriod: 'oeeReportDashboard.dailyPeriod',
     monthlyPeriod: 'oeeReportDashboard.monthlyPeriod',
+    filters: 'oeeReportDashboard.filters',
     area: 'oeeReportDashboard.area',
     type: 'oeeReportDashboard.type',
     machine: 'oeeReportDashboard.machine',
     model: 'oeeReportDashboard.model',
 };
+
+type FilterKey = 'area' | 'type' | 'machine' | 'model';
+
+const LEGACY_FILTER_STORAGE_KEYS: Record<FilterKey, string> = {
+    area: STORAGE_KEYS.area,
+    type: STORAGE_KEYS.type,
+    machine: STORAGE_KEYS.machine,
+    model: STORAGE_KEYS.model,
+};
+
+const MONTH_OPTIONS = [
+    { value: '01', label: 'January' },
+    { value: '02', label: 'February' },
+    { value: '03', label: 'March' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'May' },
+    { value: '06', label: 'June' },
+    { value: '07', label: 'July' },
+    { value: '08', label: 'August' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+];
+
+const YEAR_OPTIONS = Array.from({ length: 11 }, (_, index) => String(2025 + index));
 
 function readStoredValue(key: string, fallback = '', allowAll = false) {
     if (typeof window === 'undefined') return fallback;
@@ -144,6 +190,20 @@ function storeValue(key: string, value: string, allowAll = false) {
     } else {
         window.localStorage.removeItem(key);
     }
+}
+
+function filterStorageKey(mode: ReportMode, key: FilterKey) {
+    return `${STORAGE_KEYS.filters}.${mode}.${key}`;
+}
+
+function readStoredFilter(mode: ReportMode, key: FilterKey, fallback = '', allowAll = false) {
+    const scopedValue = readStoredValue(filterStorageKey(mode, key), '', allowAll);
+    if (scopedValue) return scopedValue;
+    return readStoredValue(LEGACY_FILTER_STORAGE_KEYS[key], fallback, allowAll);
+}
+
+function storeFilter(mode: ReportMode, key: FilterKey, value: string, allowAll = false) {
+    storeValue(filterStorageKey(mode, key), value, allowAll);
 }
 
 function withoutAllOptions(options: OptionItem[]) {
@@ -193,14 +253,24 @@ function chartOptions(title: string | string[], yTitle: string, extra?: ChartOpt
     const base: ChartOptions<'bar' | 'line'> = {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+            axis: 'x',
+        },
         layout: { padding: { top: 4, right: 8, bottom: 0, left: 4 } },
         plugins: {
             legend: {
                 position: 'top',
-                labels: { boxWidth: 14, usePointStyle: false, font: { size: 11 } },
+                labels: {
+                    boxWidth: 14,
+                    usePointStyle: false,
+                    font: { size: 11 },
+                    filter: (item) => !String(item.text || '').startsWith('Total Output'),
+                },
             },
             title: {
-                display: true,
+                display: false,
                 text: title,
                 align: 'start',
                 color: '#334155',
@@ -274,7 +344,7 @@ function pieOptions(title: string): ChartOptions<'pie'> {
         layout: { padding: 8 },
         plugins: {
             legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
-            title: { display: true, text: title, align: 'start', color: '#334155', font: { size: 14, weight: 'bold' } },
+            title: { display: false, text: title, align: 'start', color: '#334155', font: { size: 14, weight: 'bold' } },
             tooltip: { enabled: true },
             datalabels: { display: false },
         },
@@ -288,6 +358,33 @@ function toFixedNumber(value: number | null | undefined, digits = 1) {
     return Number(Number(value).toFixed(digits));
 }
 
+function chartDataValue(ctx: unknown) {
+    const context = ctx as ChartContextLike;
+    const index = typeof context.dataIndex === 'number' ? context.dataIndex : -1;
+    return Number(context.dataset?.data?.[index]);
+}
+
+function hexToRgba(hex: string, alpha: number) {
+    const normalized = hex.replace('#', '');
+    if (normalized.length !== 6) return hex;
+    const value = parseInt(normalized, 16);
+    const red = (value >> 16) & 255;
+    const green = (value >> 8) & 255;
+    const blue = value & 255;
+    return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function downtimeBarDatalabels(minPercent: number, formatter: (value: number) => string) {
+    return {
+        display: (ctx: unknown) => chartDataValue(ctx) >= minPercent,
+        color: '#ffffff',
+        textStrokeColor: 'rgba(15, 23, 42, 0.55)',
+        textStrokeWidth: 2,
+        font: { size: 10, weight: 'bold' as const },
+        formatter,
+    };
+}
+
 function safeNumber(value: number | null | undefined) {
     if (value == null) return null;
     const n = Number(value);
@@ -296,12 +393,15 @@ function safeNumber(value: number | null | undefined) {
 
 function targetDatalabels(color: string, formatFn: (v: number) => string) {
     return {
-        display: (ctx: any) => {
-            const val = Number(ctx.dataset.data[ctx.dataIndex]);
+        display: (ctx: unknown) => {
+            const val = chartDataValue(ctx);
             if (!val || val <= 0) return false;
             let prevVal = null;
-            for (let i = ctx.dataIndex - 1; i >= 0; i--) {
-                const p = Number(ctx.dataset.data[i]);
+            const context = ctx as ChartContextLike;
+            const data = context.dataset?.data || [];
+            const currentIndex = typeof context.dataIndex === 'number' ? context.dataIndex : 0;
+            for (let i = currentIndex - 1; i >= 0; i--) {
+                const p = Number(data[i]);
                 if (p > 0) { prevVal = p; break; }
             }
             return prevVal !== val;
@@ -318,38 +418,85 @@ function targetDatalabels(color: string, formatFn: (v: number) => string) {
     };
 }
 
-type DowntimeKey = 'alarm' | 'maintenance' | 'adjust';
-
-function ReportPanel({ children }: { children: React.ReactNode }) {
-    return <section style={panelStyle}>{children}</section>;
+function ReportPanel({ children, title, style }: { children: React.ReactNode; title?: string; style?: React.CSSProperties }) {
+    return (
+        <section style={{ ...panelStyle, ...style }}>
+            {title && <div style={panelTitleStyle}>{title}</div>}
+            <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
+        </section>
+    );
 }
 
 export default function ReportDashboard({ mode, initialMachine }: { mode: ReportMode; initialMachine: string }) {
+    const router = useRouter();
     const initialMachineValue = initialMachine && initialMachine.toLowerCase() !== 'all' ? initialMachine : '';
-    const [reportMode, setReportMode] = useState<ReportMode>(() => {
-        const storedMode = readStoredValue(STORAGE_KEYS.mode, mode);
+    const modeStorageKey = `${STORAGE_KEYS.mode}.${mode}`;
+    const initialReportMode = (() => {
+        const storedMode = readStoredValue(modeStorageKey, mode);
         return storedMode === 'monthly' ? 'monthly' : 'daily';
-    });
+    })();
+    const [reportMode, setReportMode] = useState<ReportMode>(initialReportMode);
+    const [activeInitialMachine, setActiveInitialMachine] = useState(initialMachineValue);
     const [dailyPeriod, setDailyPeriod] = useState(() => readStoredValue(STORAGE_KEYS.dailyPeriod, currentMonth()));
     const [monthlyPeriod, setMonthlyPeriod] = useState(() => readStoredValue(STORAGE_KEYS.monthlyPeriod, currentYear()));
-    const [area, setArea] = useState(() => readStoredValue(STORAGE_KEYS.area));
-    const [type, setType] = useState(() => readStoredValue(STORAGE_KEYS.type));
-    const [machine, setMachine] = useState(() => initialMachineValue || readStoredValue(STORAGE_KEYS.machine, 'ALL', true));
-    const [model, setModel] = useState(() => readStoredValue(STORAGE_KEYS.model, 'all', true));
+    const [area, setArea] = useState(() => readStoredFilter(initialReportMode, 'area'));
+    const [type, setType] = useState(() => readStoredFilter(initialReportMode, 'type'));
+    const [machine, setMachine] = useState(() => initialMachineValue || readStoredFilter(initialReportMode, 'machine', 'ALL', true));
+    const [model, setModel] = useState(() => readStoredFilter(initialReportMode, 'model', 'all', true));
     const [areaOptions, setAreaOptions] = useState<OptionItem[]>([]);
     const [typeOptions, setTypeOptions] = useState<OptionItem[]>([]);
     const [machineOptions, setMachineOptions] = useState<OptionItem[]>([]);
     const [data, setData] = useState<ReportResults | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const storedTypeRef = useRef(readStoredValue(STORAGE_KEYS.type));
-    const storedMachineRef = useRef(initialMachineValue || readStoredValue(STORAGE_KEYS.machine, 'ALL', true));
-    const storedModelRef = useRef(readStoredValue(STORAGE_KEYS.model, 'all', true));
+    const storedTypeRef = useRef(readStoredFilter(initialReportMode, 'type'));
+    const storedMachineRef = useRef(initialMachineValue || readStoredFilter(initialReportMode, 'machine', 'ALL', true));
+    const storedModelRef = useRef(readStoredFilter(initialReportMode, 'model', 'all', true));
     const reportRequestRef = useRef(0);
     const initialMachineSyncRef = useRef('');
 
     const period = reportMode === 'daily' ? dailyPeriod : monthlyPeriod;
-    const buckets = reportMode === 'daily' ? (data?.days || []) : (data?.months || []);
+    const dailyYear = dailyPeriod.slice(0, 4) || currentYear();
+    const dailyMonth = dailyPeriod.slice(5, 7) || '01';
+    const buckets = useMemo(() => reportMode === 'daily' ? (data?.days || []) : (data?.months || []), [data, reportMode]);
+    const statusReportGroups = useMemo(() => data?.statusReportGroups || [], [data]);
+    const statusReportGroupKeyByLabel = useMemo(() => {
+        return Object.fromEntries(statusReportGroups.map((group) => [group.label, group.key]));
+    }, [statusReportGroups]);
+    const setDailyPeriodPart = useCallback((part: 'year' | 'month', value: string) => {
+        const nextYear = part === 'year' ? value : dailyYear;
+        const nextMonth = part === 'month' ? value : dailyMonth;
+        setDailyPeriod(`${nextYear}-${nextMonth}`);
+    }, [dailyMonth, dailyYear]);
+
+    const changeReportMode = useCallback((nextMode: ReportMode) => {
+        if (nextMode === reportMode) return;
+
+        if (!activeInitialMachine) {
+            const nextArea = readStoredFilter(nextMode, 'area');
+            const nextType = readStoredFilter(nextMode, 'type');
+            const nextMachine = readStoredFilter(nextMode, 'machine', 'ALL', true);
+            const nextModel = readStoredFilter(nextMode, 'model', 'all', true);
+
+            storedTypeRef.current = nextType;
+            storedMachineRef.current = nextMachine;
+            storedModelRef.current = nextModel;
+            setArea(nextArea);
+            setType(nextType);
+            setMachine(nextMachine);
+            setModel(nextModel);
+        } else {
+            storedMachineRef.current = activeInitialMachine;
+            storedModelRef.current = 'all';
+        }
+
+        setReportMode(nextMode);
+    }, [activeInitialMachine, reportMode]);
+
+    useEffect(() => {
+        setActiveInitialMachine(initialMachineValue);
+        initialMachineSyncRef.current = '';
+    }, [initialMachineValue]);
 
     useEffect(() => {
         axios.get<ApiListResponse>(`${apiServer}/api/machine/listArea`).then((res) => {
@@ -363,9 +510,9 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
     }, []);
 
     useEffect(() => {
-        if (!initialMachineValue) return;
-        if (initialMachineSyncRef.current === initialMachineValue) return;
-        initialMachineSyncRef.current = initialMachineValue;
+        if (!activeInitialMachine) return;
+        if (initialMachineSyncRef.current === activeInitialMachine) return;
+        initialMachineSyncRef.current = activeInitialMachine;
 
         axios.get<MachinesByAreaResponse>(`${apiServer}/api/machine/listAllMachinesByArea`).then((res) => {
             const raw = (res.data && typeof res.data === 'object') ? (res.data as MachinesByAreaResponse).results : undefined;
@@ -374,7 +521,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
             let foundType = '';
             for (const group of groups) {
                 for (const m of group.machines || []) {
-                    if (m?.name === initialMachineValue) {
+                    if (m?.name === activeInitialMachine) {
                         foundArea = group.area || '';
                         foundType = m.type || '';
                         break;
@@ -383,10 +530,10 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                 if (foundArea) break;
             }
 
-            storedMachineRef.current = initialMachineValue;
+            storedMachineRef.current = activeInitialMachine;
             storedModelRef.current = 'all';
             setModel('all');
-            setMachine(initialMachineValue);
+            setMachine(activeInitialMachine);
 
             if (foundArea) {
                 storedTypeRef.current = foundType;
@@ -394,16 +541,16 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                 setType(foundType);
             }
         }).catch(() => {
-            storedMachineRef.current = initialMachineValue;
+            storedMachineRef.current = activeInitialMachine;
             storedModelRef.current = 'all';
             setModel('all');
-            setMachine(initialMachineValue);
+            setMachine(activeInitialMachine);
         });
-    }, [initialMachineValue]);
+    }, [activeInitialMachine]);
 
     useEffect(() => {
         setType('');
-        if (!initialMachineValue) setMachine('ALL');
+        if (!activeInitialMachine) setMachine('ALL');
         if (!area) {
             setTypeOptions([]);
             setMachineOptions([{ value: 'ALL', label: 'All' }]);
@@ -419,10 +566,9 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                 return types[0]?.value || '';
             });
         }).catch(() => undefined);
-    }, [area, initialMachineValue]);
+    }, [area, activeInitialMachine]);
 
     useEffect(() => {
-        if (!initialMachineValue) setMachine('ALL');
         if (!area || !type) {
             setMachineOptions([{ value: 'ALL', label: 'All' }]);
             return;
@@ -431,18 +577,18 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
             const machines = withAllOption((res.data.results || []).map((item) => optionFromApiItem(item, ['machine_name', 'name'])), 'ALL');
             setMachineOptions(machines);
             setMachine((current) => {
-                if (initialMachineValue) return initialMachineValue;
+                if (activeInitialMachine) return activeInitialMachine;
                 if (current && machines.some((item) => item.value === current)) return current;
                 const storedMachine = storedMachineRef.current;
                 if (storedMachine && machines.some((item) => item.value === storedMachine)) return storedMachine;
                 return machines[0]?.value || 'ALL';
             });
         }).catch(() => undefined);
-    }, [area, type, initialMachineValue]);
+    }, [area, type, activeInitialMachine]);
 
     useEffect(() => {
-        storeValue(STORAGE_KEYS.mode, reportMode);
-    }, [reportMode]);
+        storeValue(modeStorageKey, reportMode);
+    }, [modeStorageKey, reportMode]);
 
     useEffect(() => {
         storeValue(STORAGE_KEYS.dailyPeriod, dailyPeriod);
@@ -453,20 +599,20 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
     }, [monthlyPeriod]);
 
     useEffect(() => {
-        storeValue(STORAGE_KEYS.area, area);
-    }, [area]);
+        storeFilter(reportMode, 'area', area);
+    }, [area, reportMode]);
 
     useEffect(() => {
-        storeValue(STORAGE_KEYS.type, type);
-    }, [type]);
+        storeFilter(reportMode, 'type', type);
+    }, [type, reportMode]);
 
     useEffect(() => {
-        storeValue(STORAGE_KEYS.machine, machine, true);
-    }, [machine]);
+        storeFilter(reportMode, 'machine', machine, true);
+    }, [machine, reportMode]);
 
     useEffect(() => {
-        storeValue(STORAGE_KEYS.model, model, true);
-    }, [model]);
+        storeFilter(reportMode, 'model', model, true);
+    }, [model, reportMode]);
 
     const fetchReport = useCallback(async () => {
         const requestId = reportRequestRef.current + 1;
@@ -506,86 +652,137 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
     }, [modelOptions]);
 
     const labels = buckets.map((item) => item.label);
+    const navigationMachine = useMemo(() => {
+        if (machine && machine !== 'ALL' && machine.toLowerCase() !== 'all') return machine;
+        if (data?.machines?.length === 1) return data.machines[0].machine_name;
+        return '';
+    }, [data, machine]);
+
+    const confirmDailyChartNavigation = useCallback(async (view: 'output' | 'status', bucketIndex: number | undefined) => {
+        if (reportMode !== 'daily') return;
+        if (bucketIndex == null || bucketIndex < 0) return;
+
+        const bucket = buckets[bucketIndex];
+        if (!bucket) return;
+
+        const hasDowntime = Object.values(bucket.downtime || {}).some((value) => Number(value || 0) > 0);
+        const hasOutput = Number(bucket.output || 0) > 0
+            || Number(bucket.outputA || 0) > 0
+            || Number(bucket.outputB || 0) > 0
+            || Number(bucket.outputC || 0) > 0;
+        const hasDailyData = hasOutput || hasDowntime || bucket.availability != null || bucket.runtimeMinutes != null;
+        if (!hasDailyData) return;
+
+        if (!navigationMachine) {
+            await Swal.fire({
+                title: 'Select one machine',
+                text: 'Please select a specific machine before opening the machine view.',
+                icon: 'info',
+            });
+            return;
+        }
+
+        const params = new URLSearchParams({
+            machine_name: navigationMachine,
+            date: bucket.key,
+            view,
+        });
+
+        const result = await Swal.fire({
+            title: 'Open machine view?',
+            text: `Machine ${navigationMachine} on ${bucket.key} (${view === 'status' ? 'MC Status' : 'Output'})`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Open',
+            cancelButtonText: 'Cancel',
+        });
+
+        if (!result.isConfirmed) return;
+        localStorage.setItem('machineWorkingTab', view);
+        localStorage.setItem('machineNameLocal', navigationMachine);
+        localStorage.setItem('machineDateLocal', bucket.key);
+        router.push(`/machine_working?${params.toString()}`);
+    }, [buckets, navigationMachine, reportMode, router]);
 
     const downtimeMeta = useMemo(() => {
-        const minutes: Record<DowntimeKey, Array<number | null>> = {
-            alarm: [],
-            maintenance: [],
-            adjust: [],
-        };
-        const counts: Record<DowntimeKey, Array<number | null>> = {
-            alarm: [],
-            maintenance: [],
-            adjust: [],
-        };
+        const minutes: Record<string, Array<number | null>> = {};
+        const counts: Record<string, Array<number | null>> = {};
         const runtimeMinutes: Array<number | null> = [];
         const denomMinutes: Array<number | null> = [];
-        const pct: Record<DowntimeKey, Array<number | null>> = {
-            alarm: [],
-            maintenance: [],
-            adjust: [],
-        };
+        const pct: Record<string, Array<number | null>> = {};
+
+        statusReportGroups.forEach((group) => {
+            minutes[group.key] = [];
+            counts[group.key] = [];
+            pct[group.key] = [];
+        });
 
         buckets.forEach((bucket) => {
-            const alarmMin = safeNumber(bucket.downtime?.alarm);
-            const maintMin = safeNumber(bucket.downtime?.maintenance);
-            const adjustMin = safeNumber(bucket.downtime?.adjust);
             const rtMin = safeNumber(bucket.runtimeMinutes);
+            const groupMinutes = statusReportGroups.map((group) => ({
+                key: group.key,
+                value: safeNumber(bucket.downtime?.[group.key]),
+            }));
 
-            minutes.alarm.push(alarmMin);
-            minutes.maintenance.push(maintMin);
-            minutes.adjust.push(adjustMin);
-
-            counts.alarm.push(safeNumber(bucket.downtimeCounts?.alarm) ?? (alarmMin == null ? null : 0));
-            counts.maintenance.push(safeNumber(bucket.downtimeCounts?.maintenance) ?? (maintMin == null ? null : 0));
-            counts.adjust.push(safeNumber(bucket.downtimeCounts?.adjust) ?? (adjustMin == null ? null : 0));
+            groupMinutes.forEach(({ key, value }) => {
+                minutes[key].push(value);
+                counts[key].push(safeNumber(bucket.downtimeCounts?.[key]) ?? (value == null ? null : 0));
+            });
 
             runtimeMinutes.push(rtMin);
 
-            if (alarmMin == null || maintMin == null || adjustMin == null || rtMin == null) {
+            if (rtMin == null || groupMinutes.some(({ value }) => value == null)) {
                 denomMinutes.push(null);
-                pct.alarm.push(null);
-                pct.maintenance.push(null);
-                pct.adjust.push(null);
+                statusReportGroups.forEach((group) => pct[group.key].push(null));
                 return;
             }
 
-            const downtimeTotal = alarmMin + maintMin + adjustMin;
-            const denom = rtMin + downtimeTotal;
+            const downtimeTotal = groupMinutes.reduce((sum, item) => sum + (item.value || 0), 0);
+            const statusBaseMin = safeNumber(bucket.statusBaseMinutes);
+            const denom = reportMode === 'daily' && statusBaseMin != null
+                ? statusBaseMin
+                : rtMin + downtimeTotal;
             denomMinutes.push(denom > 0 ? denom : 0);
 
             if (denom <= 0) {
-                pct.alarm.push(null);
-                pct.maintenance.push(null);
-                pct.adjust.push(null);
+                statusReportGroups.forEach((group) => pct[group.key].push(null));
                 return;
             }
 
-            pct.alarm.push(toFixedNumber((alarmMin / denom) * 100, 2));
-            pct.maintenance.push(toFixedNumber((maintMin / denom) * 100, 2));
-            pct.adjust.push(toFixedNumber((adjustMin / denom) * 100, 2));
+            groupMinutes.forEach(({ key, value }) => {
+                pct[key].push(toFixedNumber(((value || 0) / denom) * 100, 2));
+            });
         });
 
         return { minutes, counts, runtimeMinutes, denomMinutes, pct };
-    }, [buckets]);
+    }, [buckets, statusReportGroups, reportMode]);
 
     const downtimeEfficiencyData = {
         labels,
         datasets: [
-            { type: 'bar' as const, label: 'Alarm', data: downtimeMeta.pct.alarm, backgroundColor: chartColors.alarm, stack: 'downtime', yAxisID: 'y', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 5, formatter: (v: number) => Math.round(v) + '%' } },
-            { type: 'bar' as const, label: 'Maintenance', data: downtimeMeta.pct.maintenance, backgroundColor: chartColors.maintenance, stack: 'downtime', yAxisID: 'y', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 5, formatter: (v: number) => Math.round(v) + '%' } },
-            { type: 'bar' as const, label: 'Adjust machine', data: downtimeMeta.pct.adjust, backgroundColor: chartColors.adjust, stack: 'downtime', yAxisID: 'y', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 5, formatter: (v: number) => Math.round(v) + '%' } },
-            { type: 'line' as const, label: 'Availability', data: buckets.map((item) => item.availability), borderColor: chartColors.efficiency, backgroundColor: chartColors.efficiency, tension: 0.25, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'bottom' as const, anchor: 'end' as const, offset: 6, font: { size: 9, weight: 'normal' as const }, color: chartColors.efficiency, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 4, formatter: (v: number) => Math.round(v) + '%' } },
+            ...statusReportGroups.map((group) => ({
+                type: 'bar' as const,
+                label: group.label,
+                data: downtimeMeta.pct[group.key] || [],
+                backgroundColor: hexToRgba(group.color, 0.88),
+                borderColor: group.color,
+                borderWidth: 1,
+                stack: 'downtime',
+                yAxisID: 'y',
+                order: 2,
+                datalabels: downtimeBarDatalabels(6, (v: number) => Math.round(v) + '%'),
+            })),
+            { type: 'line' as const, label: 'Availability', data: buckets.map((item) => item.availability), borderColor: chartColors.efficiency, backgroundColor: chartColors.efficiency, tension: 0.25, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'bottom' as const, anchor: 'end' as const, offset: 6, font: { size: 9, weight: 'bold' as const }, color: chartColors.efficiency, backgroundColor: 'rgba(255,255,255,0.88)', borderRadius: 4, padding: { top: 1, bottom: 1, left: 3, right: 3 }, formatter: (v: number) => Math.round(v) + '%' } },
         ],
     };
 
     const outputData = {
         labels,
         datasets: [
-            { type: 'bar' as const, label: 'Shift A (07:00-15:00)', data: buckets.map((item) => item.outputA), backgroundColor: '#3b82f6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 10, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
-            { type: 'bar' as const, label: 'Shift B (15:00-23:00)', data: buckets.map((item) => item.outputB), backgroundColor: '#14b8a6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 10, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
-            { type: 'bar' as const, label: 'Shift C (23:00-07:00)', data: buckets.map((item) => item.outputC), backgroundColor: '#8b5cf6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 10, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
-            { type: 'line' as const, label: 'Total Output', data: buckets.map((item) => item.output), borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, pointHoverRadius: 0, tension: 0, stack: 'total_line', yAxisID: 'y', order: 3, hidden: true, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'top' as const, anchor: 'end' as const, offset: 4, color: '#334155', font: { size: 11, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
+            { type: 'bar' as const, label: 'Shift A (07:00-15:00)', data: buckets.map((item) => item.outputA), backgroundColor: '#3b82f6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 10, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
+            { type: 'bar' as const, label: 'Shift B (15:00-23:00)', data: buckets.map((item) => item.outputB), backgroundColor: '#14b8a6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 10, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
+            { type: 'bar' as const, label: 'Shift C (23:00-07:00)', data: buckets.map((item) => item.outputC), backgroundColor: '#8b5cf6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 10, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
+            { type: 'line' as const, label: 'Total Output', data: buckets.map((item) => item.output), borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, pointHoverRadius: 0, tension: 0, stack: 'total_line', yAxisID: 'y', order: 3, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'top' as const, anchor: 'end' as const, offset: 4, color: '#334155', font: { size: 11, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
             { type: 'line' as const, label: 'Output Target', data: buckets.map((item) => item.outputTarget), borderColor: chartColors.outputTarget, borderDash: [8, 5], backgroundColor: chartColors.outputTarget, tension: 0.2, yAxisID: 'y', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: targetDatalabels(chartColors.outputTarget, (v: number) => { const n = Math.round(v); return 'T: ' + (n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString()); }) },
         ],
     };
@@ -593,7 +790,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
     const cycleData = {
         labels,
         datasets: [
-            { type: 'bar' as const, label: 'Cycle Time', data: buckets.map((item) => item.cycleTime), borderColor: chartColors.cycle, backgroundColor: chartColors.cycle, order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'top' as const, anchor: 'end' as const, offset: 4, font: { size: 9, weight: 'normal' as const }, formatter: (v: number) => Number(v).toFixed(1) } },
+            { type: 'bar' as const, label: 'Cycle Time', data: buckets.map((item) => item.cycleTime), borderColor: chartColors.cycle, backgroundColor: chartColors.cycle, order: 2, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'top' as const, anchor: 'end' as const, offset: 4, font: { size: 9, weight: 'normal' as const }, formatter: (v: number) => Number(v).toFixed(1) } },
             { type: 'line' as const, label: 'Cycle Target', data: buckets.map((item) => item.cycleTimeTarget), borderColor: chartColors.cycleTarget, borderDash: [8, 5], backgroundColor: chartColors.cycleTarget, tension: 0.2, order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: targetDatalabels(chartColors.cycleTarget, (v: number) => 'T: ' + Number(v).toFixed(1)) },
         ],
     };
@@ -601,12 +798,12 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
     const monthlyStatusData = {
         labels,
         datasets: [
-            { type: 'bar' as const, label: 'Shift A/day (07:00-15:00)', data: buckets.map((item) => item.outputPerDayA ?? item.outputA), backgroundColor: '#3b82f6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 9, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
-            { type: 'bar' as const, label: 'Shift B/day (15:00-23:00)', data: buckets.map((item) => item.outputPerDayB ?? item.outputB), backgroundColor: '#14b8a6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 9, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
-            { type: 'bar' as const, label: 'Shift C/day (23:00-07:00)', data: buckets.map((item) => item.outputPerDayC ?? item.outputC), backgroundColor: '#8b5cf6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 9, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
-            { type: 'line' as const, label: 'Total Output/day', data: buckets.map((item) => item.outputPerDay ?? item.output), borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, pointHoverRadius: 0, tension: 0, stack: 'total_line', yAxisID: 'y', order: 3, hidden: true, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'top' as const, anchor: 'end' as const, offset: 4, color: '#334155', font: { size: 10, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
+            { type: 'bar' as const, label: 'Shift A/day (07:00-15:00)', data: buckets.map((item) => item.outputPerDayA ?? item.outputA), backgroundColor: '#3b82f6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 9, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
+            { type: 'bar' as const, label: 'Shift B/day (15:00-23:00)', data: buckets.map((item) => item.outputPerDayB ?? item.outputB), backgroundColor: '#14b8a6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 9, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
+            { type: 'bar' as const, label: 'Shift C/day (23:00-07:00)', data: buckets.map((item) => item.outputPerDayC ?? item.outputC), backgroundColor: '#8b5cf6', stack: 'output', yAxisID: 'y', order: 2, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'center' as const, anchor: 'center' as const, color: '#ffffff', font: { size: 9, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
+            { type: 'line' as const, label: 'Total Output/day', data: buckets.map((item) => item.outputPerDay ?? item.output), borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0, pointHoverRadius: 0, tension: 0, stack: 'total_line', yAxisID: 'y', order: 3, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'top' as const, anchor: 'end' as const, offset: 4, color: '#334155', font: { size: 10, weight: 'bold' as const }, formatter: (v: number) => { const n = Math.round(v); return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString(); } } },
             { type: 'line' as const, label: 'Output Target/day', data: buckets.map((item) => item.outputTargetPerDay ?? item.outputTarget), borderColor: chartColors.outputTarget, borderDash: [8, 5], backgroundColor: chartColors.outputTarget, tension: 0.2, yAxisID: 'y', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: targetDatalabels(chartColors.outputTarget, (v: number) => { const n = Math.round(v); return 'T: ' + (n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/, '') + 'k' : n.toString()); }) },
-            { type: 'line' as const, label: 'Availability', data: buckets.map((item) => item.availability), borderColor: chartColors.efficiency, backgroundColor: chartColors.efficiency, tension: 0.25, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 0, align: 'bottom' as const, anchor: 'end' as const, offset: 6, font: { size: 9, weight: 'normal' as const }, color: chartColors.efficiency, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 4, formatter: (v: number) => Math.round(v) + '%' } },
+            { type: 'line' as const, label: 'Availability', data: buckets.map((item) => item.availability), borderColor: chartColors.efficiency, backgroundColor: chartColors.efficiency, tension: 0.25, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: (ctx: unknown) => chartDataValue(ctx) > 0, align: 'bottom' as const, anchor: 'end' as const, offset: 6, font: { size: 9, weight: 'normal' as const }, color: chartColors.efficiency, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 4, formatter: (v: number) => Math.round(v) + '%' } },
             { type: 'line' as const, label: 'Availability Target', data: buckets.map((item) => item.efficiencyTarget), borderColor: chartColors.efficiencyTarget, borderDash: [8, 5], backgroundColor: chartColors.efficiencyTarget, tension: 0.2, yAxisID: 'y1', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: targetDatalabels(chartColors.efficiencyTarget, (v: number) => 'T: ' + Math.round(v) + '%') },
             { type: 'line' as const, label: 'Cycle Time', data: buckets.map((item) => item.cycleTime), borderColor: chartColors.cycle, backgroundColor: chartColors.cycle, tension: 0.2, yAxisID: 'y2', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: false } },
             { type: 'line' as const, label: 'Cycle Target', data: buckets.map((item) => item.cycleTimeTarget), borderColor: chartColors.cycleTarget, borderDash: [8, 5], backgroundColor: chartColors.cycleTarget, tension: 0.2, yAxisID: 'y2', order: 1, pointRadius: 3, pointHoverRadius: 5, datalabels: { display: false } },
@@ -627,9 +824,16 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
     const downtimeOnlyData = {
         labels,
         datasets: [
-            { label: 'Alarm', data: downtimeMeta.pct.alarm, backgroundColor: chartColors.alarm, stack: 'downtime', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 2, formatter: (v: number) => v.toFixed(1) + '%' } },
-            { label: 'Maintenance', data: downtimeMeta.pct.maintenance, backgroundColor: chartColors.maintenance, stack: 'downtime', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 2, formatter: (v: number) => v.toFixed(1) + '%' } },
-            { label: 'Adjust machine', data: downtimeMeta.pct.adjust, backgroundColor: chartColors.adjust, stack: 'downtime', order: 2, datalabels: { display: (ctx: any) => Number(ctx.dataset.data[ctx.dataIndex]) > 2, formatter: (v: number) => v.toFixed(1) + '%' } },
+            ...statusReportGroups.map((group) => ({
+                label: group.label,
+                data: downtimeMeta.pct[group.key] || [],
+                backgroundColor: hexToRgba(group.color, 0.88),
+                borderColor: group.color,
+                borderWidth: 1,
+                stack: 'downtime',
+                order: 2,
+                datalabels: downtimeBarDatalabels(3, (v: number) => v.toFixed(1) + '%'),
+            })),
         ],
     };
 
@@ -654,27 +858,51 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
 
                 <div style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 8px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'end', flexShrink: 0 }}>
                     <div className="btn-group btn-group-sm" role="group" aria-label="Report mode">
-                        <button className={`btn ${reportMode === 'daily' ? 'btn-primary' : 'btn-outline-primary'}`} type="button" onClick={() => setReportMode('daily')}>
+                        <button className={`btn ${reportMode === 'daily' ? 'btn-primary' : 'btn-outline-primary'}`} type="button" onClick={() => changeReportMode('daily')}>
                             Daily
                         </button>
-                        <button className={`btn ${reportMode === 'monthly' ? 'btn-primary' : 'btn-outline-primary'}`} type="button" onClick={() => setReportMode('monthly')}>
+                        <button className={`btn ${reportMode === 'monthly' ? 'btn-primary' : 'btn-outline-primary'}`} type="button" onClick={() => changeReportMode('monthly')}>
                             Monthly
                         </button>
                     </div>
                     <label className="form-label m-0 small" style={{ minWidth: '140px' }}>
                         {reportMode === 'daily' ? 'Month' : 'Fiscal Year'}
-                        <input
-                            className="form-control form-control-sm"
-                            type={reportMode === 'daily' ? 'month' : 'number'}
-                            value={period}
-                            min="2025"
-                            max="2035"
-                            onChange={(e) => reportMode === 'daily' ? setDailyPeriod(e.target.value) : setMonthlyPeriod(e.target.value)}
-                        />
+                        {reportMode === 'daily' ? (
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <select
+                                    className="form-select form-select-sm"
+                                    value={dailyMonth}
+                                    onChange={(e) => setDailyPeriodPart('month', e.target.value)}
+                                    aria-label="Report month"
+                                    style={{ minWidth: '105px' }}
+                                >
+                                    {MONTH_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                                </select>
+                                <select
+                                    className="form-select form-select-sm"
+                                    value={dailyYear}
+                                    onChange={(e) => setDailyPeriodPart('year', e.target.value)}
+                                    aria-label="Report year"
+                                    style={{ minWidth: '78px' }}
+                                >
+                                    {YEAR_OPTIONS.map((year) => <option key={year} value={year}>{year}</option>)}
+                                </select>
+                            </div>
+                        ) : (
+                            <input
+                                className="form-control form-control-sm"
+                                type="number"
+                                value={period}
+                                min="2025"
+                                max="2035"
+                                onChange={(e) => setMonthlyPeriod(e.target.value)}
+                            />
+                        )}
                     </label>
                     <label className="form-label m-0 small" style={{ minWidth: '130px' }}>
                         Area
                         <select className="form-select form-select-sm" value={area} onChange={(e) => {
+                            setActiveInitialMachine('');
                             storedTypeRef.current = '';
                             storedMachineRef.current = 'ALL';
                             storedModelRef.current = 'all';
@@ -689,6 +917,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                     <label className="form-label m-0 small" style={{ minWidth: '130px' }}>
                         Type
                         <select className="form-select form-select-sm" value={type} onChange={(e) => {
+                            setActiveInitialMachine('');
                             storedTypeRef.current = e.target.value;
                             storedMachineRef.current = 'ALL';
                             storedModelRef.current = 'all';
@@ -702,6 +931,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                     <label className="form-label m-0 small" style={{ minWidth: '150px' }}>
                         Machine
                         <select className="form-select form-select-sm" value={machine} onChange={(e) => {
+                            setActiveInitialMachine('');
                             storedMachineRef.current = e.target.value;
                             storedModelRef.current = 'all';
                             setMachine(e.target.value);
@@ -736,8 +966,11 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                 }}>
                     {reportMode === 'daily' ? (
                         <>
-                            <ReportPanel>
+                            <ReportPanel title="Efficiency & Downtime (Daily)">
                                 <Chart key="daily-chart-1" type="bar" data={downtimeEfficiencyData} options={chartOptions('Efficiency & Downtime (Daily)', 'Downtime [%]', {
+                                    onClick: (_event, elements) => {
+                                        void confirmDailyChartNavigation('status', elements[0]?.index);
+                                    },
                                     plugins: {
                                         tooltip: {
                                             callbacks: {
@@ -748,13 +981,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                                                     }
 
                                                     const label = String(ctx.dataset.label || '');
-                                                    const key: DowntimeKey | null = label === 'Alarm'
-                                                        ? 'alarm'
-                                                        : label === 'Maintenance'
-                                                            ? 'maintenance'
-                                                            : label === 'Adjust machine'
-                                                                ? 'adjust'
-                                                                : null;
+                                                    const key = statusReportGroupKeyByLabel[label] || '';
                                                     if (!key) return `${label}: ${ctx.formattedValue}%`;
 
                                                     const i = ctx.dataIndex;
@@ -762,8 +989,8 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                                                     const min = downtimeMeta.minutes[key][i];
                                                     const count = downtimeMeta.counts[key][i];
                                                     if (pct == null || min == null) return `${label}: -`;
-                                                    const minText = `${Math.round(min)} นาที`;
-                                                    const countText = count == null ? '-' : `${Math.round(count)} ครั้ง`;
+                                                    const minText = `${Math.round(min)} min`;
+                                                    const countText = count == null ? '-' : `${Math.round(count)} time(s)`;
                                                     return `${label}: ${toFixedNumber(pct, 1)}% (${countText}, ${minText})`;
                                                 },
                                             },
@@ -772,11 +999,11 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                                     scales: {
                                         x: { stacked: true, grid: { color: '#e2e8f0' }, ticks: { color: '#64748b', autoSkip: false } },
                                         y: { stacked: true, beginAtZero: true, max: 100, title: { display: true, text: 'Downtime [%]' } },
-                                        y1: { type: 'linear', axis: 'y', position: 'right', beginAtZero: true, max: 100, grid: { drawOnChartArea: false }, title: { display: true, text: 'Efficiency [%]' } },
+                                        y1: { type: 'linear', axis: 'y', position: 'right', beginAtZero: true, max: 100, grid: { drawOnChartArea: false }, title: { display: true, text: 'Availability [%]' } },
                                     },
                                 })} />
                             </ReportPanel>
-                            <ReportPanel>
+                            <ReportPanel title="Alarm downtime (minutes)">
                                 <Chart key="daily-chart-2" type="pie" data={alarmData} options={{
                                     ...pieOptions('Alarm downtime (minutes)'),
                                     plugins: {
@@ -796,19 +1023,21 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                                                     const count = match?.count ?? 0;
                                                     return [
                                                         `${label}: ${toFixedNumber(percent, 1)}%`,
-                                                        `เวลา: ${Math.round(minutes)} นาที`,
-                                                        `จำนวน: ${count} ครั้ง`,
+                                                        `Time: ${Math.round(minutes)} min`,
+                                                        `Count: ${count} time(s)`,
                                                     ];
                                                 },
                                             },
                                         },
                                         datalabels: {
                                             display: true,
-                                            anchor: 'end',
-                                            align: 'end',
-                                            offset: 10,
+                                            anchor: 'center',
+                                            align: 'center',
+                                            offset: 0,
                                             clamp: true,
-                                            color: '#0f172a',
+                                            color: '#ffffff',
+                                            textStrokeColor: 'rgba(15, 23, 42, 0.65)',
+                                            textStrokeWidth: 2,
                                             font: { size: 11, weight: 'bold' },
                                             formatter: (value, ctx) => {
                                                 const minutes = safeNumber(value as unknown as number) ?? 0;
@@ -819,28 +1048,31 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                                                 );
                                                 if (totalMinutes <= 0) return '';
                                                 const percent = (minutes / totalMinutes) * 100;
-                                                if (percent < 3) return '';
+                                                if (percent < 8) return '';
                                                 return `${toFixedNumber(percent, 0)}%`;
                                             },
                                         },
                                     },
                                 }} />
                             </ReportPanel>
-                            <ReportPanel>
+                            <ReportPanel title="Output (Daily)">
                                 <Chart key="daily-chart-3" type="bar" data={outputData} options={chartOptions('Output (Daily)', 'Output [pcs]', {
+                                    onClick: (_event, elements) => {
+                                        void confirmDailyChartNavigation('output', elements[0]?.index);
+                                    },
                                     scales: {
                                         x: { stacked: true },
                                         y: { stacked: true },
                                     }
                                 })} />
                             </ReportPanel>
-                            <ReportPanel>
+                            <ReportPanel title="Cycle time (Daily)">
                                 <Chart key="daily-chart-4" type="line" data={cycleData} options={chartOptions('Cycle time (Daily)', 'Cycle time [sec]')} />
                             </ReportPanel>
                         </>
                     ) : (
                         <>
-                            <div style={{ gridRow: '1 / 3', ...panelStyle }}>
+                            <ReportPanel title="Status of machine" style={{ gridRow: '1 / 3' }}>
                                 <Chart key="monthly-chart-1" type="bar" data={monthlyStatusData} options={chartOptions('Status of machine', 'Output/day [pcs]', {
                                     interaction: {
                                         mode: 'index',
@@ -854,29 +1086,23 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                                         y2: { type: 'linear', axis: 'y', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, display: false },
                                     },
                                 })} />
-                            </div>
-                            <ReportPanel>
+                            </ReportPanel>
+                            <ReportPanel title="Downtime">
                                 <Chart key="monthly-chart-2" type="bar" data={downtimeOnlyData} options={chartOptions('Downtime', 'Downtime [%]', {
                                     plugins: {
                                         tooltip: {
                                             callbacks: {
                                                 label: (ctx) => {
                                                     const label = String(ctx.dataset.label || '');
-                                                    const key: DowntimeKey | null = label === 'Alarm'
-                                                        ? 'alarm'
-                                                        : label === 'Maintenance'
-                                                            ? 'maintenance'
-                                                            : label === 'Adjust machine'
-                                                                ? 'adjust'
-                                                                : null;
+                                                    const key = statusReportGroupKeyByLabel[label] || '';
                                                     if (!key) return `${label}: ${ctx.formattedValue}%`;
                                                     const i = ctx.dataIndex;
                                                     const pct = safeNumber(ctx.parsed.y);
                                                     const min = downtimeMeta.minutes[key][i];
                                                     const count = downtimeMeta.counts[key][i];
                                                     if (pct == null || min == null) return `${label}: -`;
-                                                    const minText = `${Math.round(min)} นาที`;
-                                                    const countText = count == null ? '-' : `${Math.round(count)} ครั้ง`;
+                                                    const minText = `${Math.round(min)} min`;
+                                                    const countText = count == null ? '-' : `${Math.round(count)} time(s)`;
                                                     return `${label}: ${toFixedNumber(pct, 1)}% (${countText}, ${minText})`;
                                                 },
                                             },
@@ -888,7 +1114,7 @@ export default function ReportDashboard({ mode, initialMachine }: { mode: Report
                                     },
                                 })} />
                             </ReportPanel>
-                            <ReportPanel>
+                            <ReportPanel title="Cycle Time by process">
                                 <Chart key="monthly-chart-3" type="bar" data={cycleData} options={chartOptions('Cycle Time by process', 'Cycle time [sec]')} />
                             </ReportPanel>
                         </>

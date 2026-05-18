@@ -6,10 +6,16 @@ export interface StatusDefinition {
     label: string;
     color: string;
     group: "running" | "excluded" | "downtime" | "offline";
+    reportGroup?: string;
 }
 
-let cachedConfig: any = null;
-let fetchPromise: Promise<any> | null = null;
+interface MachineStatusConfig {
+    machineTypes: Record<string, { statuses?: StatusDefinition[] }>;
+    default: { statuses?: StatusDefinition[] };
+}
+
+let cachedConfig: MachineStatusConfig | null = null;
+let fetchPromise: Promise<MachineStatusConfig | null> | null = null;
 
 export async function fetchMachineStatusConfig() {
     if (cachedConfig) return cachedConfig;

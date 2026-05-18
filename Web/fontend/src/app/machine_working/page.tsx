@@ -147,6 +147,10 @@ function MachineWorkingInner() {
     // 5. Machine Status Tab
     const [activeTab, setActiveTab] = useState<"output" | "status">(() => {
         if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const view = params.get("view");
+            if (view === "output" || view === "status") return view;
+
             const saved = localStorage.getItem("machineWorkingTab");
             if (saved === "output" || saved === "status") return saved;
         }
@@ -164,6 +168,13 @@ function MachineWorkingInner() {
     // ✅ Blink effect is now handled by blinkOverlayPlugin (registered globally)
     // No more setInterval/useEffect cloning datasets every 600ms
 
+
+    useEffect(() => {
+        const view = searchParams.get("view");
+        if (view !== "output" && view !== "status") return;
+        setActiveTab(view);
+        localStorage.setItem("machineWorkingTab", view);
+    }, [searchParams]);
 
     useEffect(() => {
         // 1. Initialize Machine Name & Date
