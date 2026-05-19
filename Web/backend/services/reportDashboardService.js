@@ -223,9 +223,10 @@ function buildShiftTimeBuckets(start, count, unit, today = new Date()) {
     });
 }
 
-function getBucketBaseMinutes(bucket) {
+function getBucketBaseMinutes(bucket, machineCount = 1) {
     const bucketEnd = bucket.effectiveEnd || bucket.end;
-    return Math.max(0, (bucketEnd.getTime() - bucket.start.getTime()) / 60000);
+    const normalizedMachineCount = Math.max(1, Number(machineCount || 1));
+    return Math.max(0, (bucketEnd.getTime() - bucket.start.getTime()) / 60000) * normalizedMachineCount;
 }
 
 function addDurationToBuckets(bucketMap, start, end, reportGroup) {
@@ -628,7 +629,7 @@ async function getDailyDashboard({ month, area = "all", type = "all", machine = 
             downtime: isFuture ? createEmptyDowntime(reportGroups, null) : (downtimeAgg?.downtime || createEmptyDowntime(reportGroups)),
             downtimeCounts: isFuture ? createEmptyDowntime(reportGroups, null) : (downtimeAgg?.downtimeCounts || createEmptyDowntime(reportGroups)),
             runtimeMinutes: isFuture ? null : (downtimeAgg?.runtimeMinutes || 0),
-            statusBaseMinutes: isFuture ? null : getBucketBaseMinutes(downtimeAgg || day),
+            statusBaseMinutes: isFuture ? null : getBucketBaseMinutes(downtimeAgg || day, machineNames.length),
         };
     });
 
@@ -682,7 +683,7 @@ async function getMonthlyDashboard({ year, area = "all", type = "all", machine =
             downtime: future ? createEmptyDowntime(reportGroups, null) : (downtimeAgg?.downtime || createEmptyDowntime(reportGroups)),
             downtimeCounts: future ? createEmptyDowntime(reportGroups, null) : (downtimeAgg?.downtimeCounts || createEmptyDowntime(reportGroups)),
             runtimeMinutes: future ? null : (downtimeAgg?.runtimeMinutes || 0),
-            statusBaseMinutes: future ? null : getBucketBaseMinutes(downtimeAgg || monthRow),
+            statusBaseMinutes: future ? null : getBucketBaseMinutes(downtimeAgg || monthRow, machineNames.length),
         };
     });
 

@@ -4,7 +4,7 @@
  */
 
 // MC Statuses that are excluded from operating time (not counted as downtime NOR running)
-const EXCLUDED_STATUSES = new Set(["Plan_Stop", "Break_Time", "Preventive"]);
+const EXCLUDED_STATUSES = new Set(["Plan_Stop", "Break_Time", "Preventive", "Signal_Lost"]);
 // MC Status that counts as running
 const RUNNING_STATUS = "Run_Time";
 

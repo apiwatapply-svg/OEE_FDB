@@ -120,6 +120,8 @@ const chartColors = {
     orange: '#f97316',
 };
 
+const alarmPiePalette = ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4', '#70ad47', '#7030a0', '#c00000'];
+
 const panelStyle: React.CSSProperties = {
     backgroundColor: '#ffffff',
     border: '1px solid #cbd5e1',
@@ -902,12 +904,26 @@ export default function ReportDashboard({ mode, initialArea = '', initialType = 
         ],
     };
 
+    const orderedAlarmSummary = useMemo(() => {
+        return (data?.alarmSummary || [])
+            .map((item, index) => ({
+                ...item,
+                color: alarmPiePalette[index % alarmPiePalette.length],
+            }))
+            .sort((a, b) => {
+                const aIsOther = a.alarm.trim().toLowerCase() === 'other';
+                const bIsOther = b.alarm.trim().toLowerCase() === 'other';
+                if (aIsOther === bIsOther) return 0;
+                return aIsOther ? 1 : -1;
+            });
+    }, [data?.alarmSummary]);
+
     const alarmData = {
-        labels: (data?.alarmSummary || []).map((item) => item.alarm),
+        labels: orderedAlarmSummary.map((item) => item.alarm),
         datasets: [{
             label: 'Alarm downtime [min]',
-            data: (data?.alarmSummary || []).map((item) => item.minutes),
-            backgroundColor: ['#5b9bd5', '#ed7d31', '#a5a5a5', '#ffc000', '#4472c4', '#70ad47', '#7030a0', '#c00000'],
+            data: orderedAlarmSummary.map((item) => item.minutes),
+            backgroundColor: orderedAlarmSummary.map((item) => item.color),
             borderColor: '#ffffff',
             borderWidth: 2,
         }],
@@ -1111,7 +1127,7 @@ export default function ReportDashboard({ mode, initialArea = '', initialType = 
                                                         0
                                                     );
                                                     const percent = totalMinutes > 0 ? (minutes / totalMinutes) * 100 : 0;
-                                                    const match = (data?.alarmSummary || []).find((item) => item.alarm === label);
+                                                    const match = orderedAlarmSummary.find((item) => item.alarm === label);
                                                     const count = match?.count ?? 0;
                                                     return [
                                                         `${label}: ${toFixedNumber(percent, 1)}%`,
